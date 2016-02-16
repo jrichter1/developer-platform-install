@@ -20,7 +20,6 @@ class JbdsInstall extends InstallableItem {
 
     this.downloadedFile = path.join(this.installerDataSvc.tempDir(), 'jbds.jar');
     this.installConfigFile = path.join(this.installerDataSvc.tempDir(), 'jbds-autoinstall.xml');
-    this.installGenerator = new JbdsAutoInstallGenerator(this.installerDataSvc.jbdsDir(), this.installerDataSvc.jdkDir());
   }
 
   static key() {
@@ -50,6 +49,7 @@ class JbdsInstall extends InstallableItem {
 
   install(progress, success, failure) {
     progress.setStatus('Installing');
+    this.installGenerator = new JbdsAutoInstallGenerator(this.installerDataSvc.jbdsDir(), this.installerDataSvc.jdkDir());
     let installer = new Installer(JbdsInstall.key(), progress, success, failure);
 
     Logger.info(JbdsInstall.key() + ' - Generate JBDS auto install file content');
