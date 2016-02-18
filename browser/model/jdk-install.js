@@ -22,13 +22,25 @@ class JdkInstall extends InstallableItem {
     let versionRegex = /version\s\"\d\.(\d)\.\d_\d+\"/;
     let selectedFolder = '';
 
+    let extension = '';
+    let command;
+    if (process.platform === 'win32') {
+      command = 'where';
+      if (selection) {
+        extension = '.exe';
+      }
+    } else {
+      command = 'which';
+    }
+
     if(selection) {
       this.existingInstallLocation = selection[0] || this.existingInstallLocation;
       selectedFolder = path.join(this.existingInstallLocation, 'bin') + path.sep;
     }
 
     try {
-      let proc = child_process.spawnSync(selectedFolder + 'java', ['-version']);
+      //try calling java -version to see if java 8 is installed on path/in folder
+      let proc = child_process.spawnSync(selectedFolder + 'java' + extension, ['-version']);
       let version = versionRegex.exec(proc.stderr.toString())[1];
       if (!version || version < 8) {
         if (selection && data) {
@@ -39,18 +51,13 @@ class JdkInstall extends InstallableItem {
         }
       }
 
-      let jdk = child_process.spawnSync(selectedFolder + 'javac', ['-version']);
+      //find if given java is jdk - see if javac is present on path/in folder
+      let jdk = child_process.spawnSync(selectedFolder + 'javac' + extension, ['-version']);
       if (jdk.error) {
         throw 'it is not a jdk';
       }
 
-      let command;
-      if (process.platform === 'win32') {
-        command = 'where';
-      } else {
-        command = 'which';
-      }
-
+      //get the java location
       if (selection && data) {
         data[JdkInstall.key()][1] = true;
         this.existingInstall = true;
@@ -60,6 +67,7 @@ class JdkInstall extends InstallableItem {
       }
 
     } catch (error) {
+      //there is no jdk 8 or newer on path/in folder
       if (selection && data) {
         data[JdkInstall.key()][1] = false;
         this.existingInstall = false;
