@@ -1,6 +1,6 @@
 'use strict';
 
-let remote = require('remote');
+let dialog = require('remote').require('dialog');
 let fs = require('fs');
 let path = require('path');
 
@@ -29,48 +29,13 @@ class ConfirmController {
     this.router.go('install');
   }
 
-  selectFolder() {
-    let dialog = remote.require('dialog');
-    let selection = dialog.showOpenDialog({ properties: [ 'openDirectory' ]});
+  selectItem(key) {
+    let selection = dialog.showOpenDialog({ properties: [ 'openDirectory' ], defaultPath: this.installables[key][0].existingInstallLocation });
+    let item = this.installerDataSvc.getInstallable(key);
 
     if (selection) {
-      this.folder = selection[0] || this.folder;
+      item.checkForExistingInstall(selection, this.installables);
     }
-
-    this.checkFolder();
-  }
-
-  selectJava() {
-    let dialog = remote.require('dialog');
-    let selection = dialog.showOpenDialog({ properties: [ 'openDirectory' ]});
-    let item = this.installerDataSvc.getInstallable('jdk');
-
-    if (selection) {
-      item.existingInstallLocation = selection[0] || item.existingInstallLocation;
-      try {
-        let proc = require('child_process').spawnSync(path.join(item.existingInstallLocation, 'bin', 'java'), ['-version']);
-        require('child_process').spawnSync(path.join(item.existingInstallLocation, 'bin', 'javac'), ['-version']);
-
-        let versionRegex = /version\s\"\d\.(\d)\.\d_\d+\"/;
-        let version = versionRegex.exec(proc.stderr.toString())[1];
-        if (!version || version < 8) {
-          this.installables['jdk'][1] = false;
-          item.existingInstall = false;
-          return;
-        }
-
-        this.installables['jdk'][1] = true;
-        item.existingInstall = true;
-      } catch (err) {
-        this.installables['jdk'][1] = false;
-        item.existingInstall = false;
-      }
-    }
-  }
-
-  folderChanged() {
-    this.folder = folder.value;
-    this.checkFolder()
   }
 
   checkItem(key) {
@@ -83,6 +48,16 @@ class ConfirmController {
     }
   }
 
+  selectFolder() {
+    let selection = dialog.showOpenDialog({ properties: [ 'openDirectory' ], defaultPath: this.folder });
+
+    if (selection) {
+      this.folder = selection[0] || this.folder;
+    }
+
+    this.checkFolder();
+  }
+
   checkFolder() {
     try {
       fs.accessSync(this.folder, fs.F_OK);
@@ -90,6 +65,11 @@ class ConfirmController {
     } catch (err) {
       this.folderExists = false;
     }
+  }
+
+  folderChanged() {
+    this.folder = folder.value;
+    this.checkFolder()
   }
 }
 
