@@ -26,18 +26,19 @@ class InstallerDataService {
     this.installableItems = new Map();
     this.toDownload = new Set();
     this.toInstall = new Set();
+    this.toSetup = new Set();
     this.downloading = false;
     this.installing = false;
   }
 
-  setup(installRoot) {
-    this.installRoot = installRoot;
-    this.vboxRoot = path.join(this.installRoot, 'virtualbox');
-    this.jdkRoot = path.join(this.installRoot, 'jdk8');
-    this.jbdsRoot = path.join(this.installRoot, 'DeveloperStudio');
-    this.vagrantRoot = path.join(this.installRoot, 'vagrant');
-    this.cygwinRoot = path.join(this.installRoot, 'cygwin');
-    this.cdkRoot = path.join(this.installRoot, 'cdk');
+  setup(installRoot, vboxRoot, jdkRoot, jbdsRoot, vagrantRoot, cygwinRoot, cdkRoot) {
+    this.installRoot = installRoot || this.installRoot;
+    this.vboxRoot = vboxRoot || path.join(this.installRoot, 'virtualbox');
+    this.jdkRoot = jdkRoot || path.join(this.installRoot, 'jdk8');
+    this.jbdsRoot = jbdsRoot || path.join(this.installRoot, 'DeveloperStudio');
+    this.vagrantRoot = vagrantRoot || path.join(this.installRoot, 'vagrant');
+    this.cygwinRoot = cygwinRoot || path.join(this.installRoot, 'cygwin');
+    this.cdkRoot = cdkRoot || path.join(this.installRoot, 'cdk');
     this.cdkBoxRoot = path.join(this.cdkRoot, 'boxes');
     this.ocBinRoot = path.join(this.cdkRoot, 'bin');
     this.cdkVagrantRoot = path.join(this.cdkRoot, 'openshift-vagrant');
@@ -170,6 +171,16 @@ class InstallerDataService {
     this.toInstall.add(key);
   }
 
+  startSetup(key) {
+    Logger.info('Existing installation detected for: ' + key);
+    Logger.info('Setup started for: ' + key);
+
+    if (!this.isInstalling()) {
+      this.installing = true;
+    }
+    this.toSetup.add(key);
+  }
+
   installDone(key) {
     Logger.info('Install finished for: ' + key);
 
@@ -178,8 +189,12 @@ class InstallerDataService {
 
     ipcRenderer.send('installComplete', key);
 
-    this.toInstall.delete(key);
-    if (!this.isDownloading() && this.isInstalling() && this.toInstall.size == 0) {
+    if (this.toSetup.has(key)) {
+      this.toSetup.delete(key)
+    } else {
+      this.toInstall.delete(key);
+    }
+    if (!this.isDownloading() && this.isInstalling() && this.toInstall.size == 0 && this.toSetup.size == 0) {
       Logger.info('All installs complete');
 
       this.installing = false;
