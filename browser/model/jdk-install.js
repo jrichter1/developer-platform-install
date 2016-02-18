@@ -2,6 +2,7 @@
 
 let fs = require('fs');
 let path = require('path');
+let child_process = require('child_process');
 
 import InstallableItem from './installable-item';
 import Downloader from './helpers/downloader';
@@ -18,7 +19,6 @@ class JdkInstall extends InstallableItem {
   }
 
   checkForExistingInstall(selection, data) {
-    let child_process = require('child_process');
     let versionRegex = /version\s\"\d\.(\d)\.\d_\d+\"/;
     let selectedFolder = '';
 
