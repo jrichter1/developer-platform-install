@@ -17,7 +17,61 @@ class JdkInstall extends InstallableItem {
     this.downloadedFile = path.join(this.installerDataSvc.tempDir(), 'jdk8.zip');
   }
 
-  checkForExistingInstall() {
+  checkForExistingInstall(cb) {
+    let child_process = require('child_process');
+    let versionRegex = /version\s\"\d\.(\d)\.\d_\d+\"/;
+
+    try {
+      let proc = child_process.spawnSync('java', ['-version']);
+      let version = versionRegex.exec(proc.stderr.toString())[1];
+      if (!version || version < 8) {
+        return '';
+      }
+
+      child_process.spawnSync('javac', ['-version']);
+      let command;
+      if (process.platform === 'win32') {
+        command = 'where';
+      } else {
+        command = 'which';
+      }
+      let location = child_process.spawnSync(command, ['java']).stdout.toString();
+      return path.dirname(path.dirname(location));
+    } catch (error) {
+      return '';
+    }
+
+    // child_process.exec('java -version', (error, stdout, stderr) => {
+    //   if (error) {
+    //     return null;
+    //   } else {
+    //     //java -version outputs to stderr instead of stdout
+    //     version = versionRegex.exec(stderr)[1];
+    //
+    //     child_process.exec('javac -version', (err, stdo, stde) => {
+    //       if (err) {
+    //         installation = 'jre';
+    //       } else {
+    //         installation = 'jdk';
+    //       }
+    //
+    //       let command;
+    //       if (process.platform === 'win32') {
+    //         command = 'where';
+    //       } else {
+    //         command = 'which';
+    //       }
+    //       child_process.exec(command + ' java', (er, sto, ste) => {
+    //         if (er) {
+    //           return null;
+    //         } else {
+    //           result = sto;
+    //           cb(result);
+    //         }
+    //       });
+    //     });
+    //   }
+    // });
   }
 
   static key() {

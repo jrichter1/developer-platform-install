@@ -51,10 +51,37 @@
         </div>
       </div>
     </div>
+
     <div class="panel panel-default">
       <div class="panel-heading">
         <span class="product-name">OpenJDK</span><span class="product-version">v8</span>
         <div>Java Development Kit for running JBoss Developer Studio</div>
+        <div>
+          <div>
+            OpenJDK v8 will be installed. Or you may hit "Browse" and select an existing JDK 8 installation instead. Below is what we found on your machine:
+          </div>
+          <div class="input-group">
+            <div style="position:relative">
+              <input type="text" disabled="true" name="jdk" class="form-control" ng-model="confCtrl.installables['jdk'][0].existingInstallLocation" id="jdk"/>
+            </div>
+            <span class="input-group-btn">
+              <button type="button" ng-click="confCtrl.selectJava()" class="btn btn-primary">Browse</button>
+            </span>
+          </div>
+          <div ng-show="!confCtrl.installables['jdk'][1]" class="form-group has-warning">
+            <div class="help-block">
+              <span class="pficon pficon-warning-triangle-o"></span>
+              <strong>The selection is not a valid JDK version 8 or newer. We will install OpenJDK v8 for you.</strong>
+            </div>
+          </div>
+          <div>
+            <div ng-show="confCtrl.installables['jdk'][1]" class="help-block form-group has-info">
+              <input type="checkbox" ng-disabled="!confCtrl.installables['jdk'][1]" ng-model="confCtrl.installables['jdk'][0].existingInstall">
+              <strong>I want to use the existing JDK I provided.</strong>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
     <div class="panel panel-default">
