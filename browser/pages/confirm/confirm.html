@@ -61,7 +61,7 @@
             OpenJDK v8 will be installed. Or you may hit "Browse" and select an existing JDK 8 installation instead. Below is what we found on your machine:
           </div>
           <div class="input-group">
-            <div style="position:relative">
+            <div ng-init="confCtrl.checkItem('jdk')" style="position:relative">
               <input type="text" disabled="true" name="jdk" class="form-control" ng-model="confCtrl.installables['jdk'][0].existingInstallLocation" id="jdk"/>
             </div>
             <span class="input-group-btn">
@@ -100,7 +100,7 @@
             JBDS v9 will be installed. Or you may hit "Browse" and select an existing JBDS 9 installation instead. Below is what we found on your machine:
           </div>
           <div class="input-group">
-            <div style="position:relative">
+            <div ng-init="confCtrl.checkItem('jbds')" style="position:relative">
               <input type="text" disabled="true" name="jbds" class="form-control" ng-model="confCtrl.installables['jbds'][0].existingInstallLocation" id="jbds"/>
             </div>
             <span class="input-group-btn">

@@ -3,20 +3,17 @@
 let dialog = require('remote').require('dialog');
 let fs = require('fs');
 let path = require('path');
+let ipcRenderer = require('electron').ipcRenderer;
 
 class ConfirmController {
-  constructor($state, installerDataSvc) {
+  constructor($scope, $state, installerDataSvc) {
     this.router = $state;
     this.installerDataSvc = installerDataSvc;
+    this.sc = $scope;
 
     this.folder = installerDataSvc.installDir();
     this.folderExists = false;
     this.installables = new Object();
-
-    for (var [key, value] of this.installerDataSvc.allInstallables().entries()) {
-      this.checkItem(key);
-      this.installables[key] = [value, value.existingInstall];
-    }
   }
 
   install() {
@@ -31,7 +28,7 @@ class ConfirmController {
 
   selectItem(key) {
     let selection = dialog.showOpenDialog({ properties: [ 'openDirectory' ], defaultPath: this.installables[key][0].existingInstallLocation });
-    let item = this.installerDataSvc.getInstallable(key);
+    let item = this.installerDataSvc.allInstallables().get(key);
 
     if (selection) {
       item.checkForExistingInstall(selection, this.installables);
@@ -39,13 +36,15 @@ class ConfirmController {
   }
 
   checkItem(key) {
-    let item = this.installerDataSvc.getInstallable(key);
-    let location = item.checkForExistingInstall();
+    let item = this.installerDataSvc.allInstallables().get(key);
+    item.checkForExistingInstall();
 
-    if (location && location.length > 0) {
-      item.existingInstall = true;
-      item.existingInstallLocation = location;
-    }
+    ipcRenderer.on('checkComplete', (event, arg) => {
+      if (arg === key) {
+        this.installables[key] = [item, item.existingInstall];
+        this.sc.$digest();
+      }
+    });
   }
 
   selectFolder() {
@@ -73,6 +72,6 @@ class ConfirmController {
   }
 }
 
-ConfirmController.$inject = ['$state', 'installerDataSvc'];
+ConfirmController.$inject = ['$scope', '$state', 'installerDataSvc'];
 
 export default ConfirmController;

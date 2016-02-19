@@ -4,7 +4,7 @@ let request = require('request');
 let path = require('path');
 let fs = require('fs');
 let ipcRenderer = require('electron').ipcRenderer;
-let child_process = require('child_process');
+let Glob = require("glob").Glob;
 
 import JbdsAutoInstallGenerator from './jbds-autoinstall';
 import InstallableItem from './installable-item';
@@ -27,75 +27,73 @@ class JbdsInstall extends InstallableItem {
     return 'jbds';
   }
 
+  checkVersion(location, regex) {
+    return new Promise(function (resolve) {
+      fs.readFile(path.join(location, 'readme.txt'), (err, data) => {
+        if (err) {
+          resolve(false);
+        } else {
+          if(regex.exec(data.toString())[1] >= 9) {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        }
+      });
+    });
+  }
+
   checkForExistingInstall(selection, data) {
-    let command, fileName, options, selectedFolder;
-    if (process.platform === 'win32') {
-      fileName = 'jbdevstudio.exe';
-      command = 'cd c:\ && dir ' + fileName + ' /b/s';
-    } else {
-      fileName = 'jbdevstudio';
-      command = 'find';
-      selectedFolder = process.env.HOME;
-      options = [selectedFolder, '-name', fileName]
-    }
+    let pattern, directory;
+    let versionRegex = /version\s(\d+)\.\d+\.\d+/;
+    let matched = false;
 
     if(selection) {
       this.existingInstallLocation = selection[0] || this.existingInstallLocation;
-      options[0] = path.join(this.existingInstallLocation);
     }
 
-    try {
-      let proc = child_process.spawnSync(command, options);
-      var lines = proc.stdout.toString().split('\n');
-      for (var i = 0; i < lines.length; i++) {
-        if (lines[i].length > 0 && path.dirname(lines[i]).endsWith('studio')) {
-          if (selection && path.dirname(path.dirname(lines[i])) !== options[0]) {
-            console.log(options[0]);
-            console.log(path.dirname(path.dirname(lines[i])));
-            continue;
-          }
+    if (process.platform === 'win32') {
+      directory = selection ? selection[0] : 'c:';
+      pattern = selection ? 'studio/jbdevstudio.exe' : '**/studio/jbdevstudio.exe';
+    } else {
+      directory = selection ? selection[0] : process.env.HOME;
+      pattern = selection ? 'studio/jbdevstudio' : '**/studio/jbdevstudio';
+    }
 
+    let globster = new Glob(pattern, { cwd: directory });
+    globster.on('match', (match) => {
+      let jbdsRoot = path.join(directory, path.dirname(path.dirname(match)));
+      this.checkVersion(jbdsRoot, versionRegex)
+      .then((result) => {
+        if (result) {
+          globster.abort();
+          matched = true;
+          this.existingInstall = true;
           if (selection && data) {
             data[JbdsInstall.key()][1] = true;
-            this.existingInstall = true;
-            return;
+          } else {
+            this.existingInstallLocation = selection ? this.existingInstallLocation : jbdsRoot;
           }
-          return path.dirname(path.dirname(lines[i]));
+          ipcRenderer.send('checkComplete', JbdsInstall.key());
+        } else {
+          if (selection && data) {
+            data[JbdsInstall.key()][1] = false;
+          }
+          this.existingInstall = false;
+          ipcRenderer.send('checkComplete', JbdsInstall.key());
         }
-      }
-
-      if (selection && data) {
-        data[JbdsInstall.key()][1] = false;
+      });
+    }).on('error', (err) => {
+      console.log(err);
+    }).on('end', () => {
+      if (!matched) {
+        if (data && selection) {
+          data[JbdsInstall.key()][1] = false;
+        }
         this.existingInstall = false;
-      } else {
-        return '';
+        ipcRenderer.send('checkComplete', JbdsInstall.key());
       }
-    } catch (err) {
-      if (selection && data) {
-        data[JbdsInstall.key()][1] = false;
-        this.existingInstall = false;
-      } else {
-        return '';
-      }
-    }
-
-    // child_process.exec(command, (error, stdout, stderr) => {
-    //   if (error) {
-    //     return callback('');
-    //   } else {
-    //     var lines = stdout.toString().split('\n');
-    //     var results = new Array();
-    //     lines.forEach(function(line) {
-    //       if (line.length > 0 && path.dirname(line).endsWith('studio')) {
-    //         return callback(path.dirname(path.dirname(line)));
-    //       } else {
-    //         continue;
-    //       }
-    //     });
-    //
-    //     return callback('');
-    //   }
-    // });
+    });
   }
 
   downloadInstaller(progress, success, failure) {
