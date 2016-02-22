@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "fs-extra": "0.26.4",
-    "node-glob": "7.0.0",
+    "glob": "7.0.0",
     "patternfly": "2.6.0",
     "request": "2.67.0",
     "unzip": "0.1.11",
