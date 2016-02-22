@@ -120,6 +120,13 @@ class JdkInstall extends InstallableItem {
     .catch((error) => { return installer.fail(error); });
   }
 
+  setup(progress, success, failure) {
+    //no need to setup anything for JDK
+    progress.setStatus('Setting up');
+    progress.setComplete();
+    success();
+  }
+
   getFolderContents(parentFolder, result) {
     return new Promise(function (resolve, reject) {
       fs.readdir(parentFolder, function(err, fileList) {

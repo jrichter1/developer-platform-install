@@ -17,17 +17,31 @@ class ConfirmController {
   }
 
   install() {
-    //TODO This needs to handle changes to install location, etc
+    for (var [key, value] of this.installerDataSvc.allInstallables().entries()) {
+      value.useDownload = !value.existingInstall;
+    }
 
+    this.checkFolder();
     if (!this.folderExists) {
       fs.mkdirSync(this.folder);
     }
-    this.installerDataSvc.setup(this.folder);
+
+    this.installerDataSvc.setup(this.folder,
+      this.itemRoot('virtualbox'),
+      this.itemRoot('jdk'),
+      this.itemRoot('jbds'),
+      this.itemRoot('vagrant'),
+      this.itemRoot('cygwin'),
+      this.itemRoot('cdk')
+    );
     this.router.go('install');
   }
 
   selectItem(key) {
-    let selection = dialog.showOpenDialog({ properties: [ 'openDirectory' ], defaultPath: this.installables[key][0].existingInstallLocation });
+    let selection = dialog.showOpenDialog({
+      properties: [ 'openDirectory' ],
+      defaultPath: this.installables[key][0].existingInstallLocation
+    });
     let item = this.installerDataSvc.allInstallables().get(key);
 
     if (selection) {
@@ -48,7 +62,10 @@ class ConfirmController {
   }
 
   selectFolder() {
-    let selection = dialog.showOpenDialog({ properties: [ 'openDirectory' ], defaultPath: this.folder });
+    let selection = dialog.showOpenDialog({
+      properties: [ 'openDirectory' ],
+      defaultPath: this.folder
+    });
 
     if (selection) {
       this.folder = selection[0] || this.folder;
@@ -69,6 +86,14 @@ class ConfirmController {
   folderChanged() {
     this.folder = folder.value;
     this.checkFolder()
+  }
+
+  itemRoot(key) {
+    let root = this.installables[key] ? this.installables[key][0].existingInstallLocation : null;
+    if (root && (root.length === 0 || !this.installables[key][0].existingInstall)) {
+      root = null;
+    }
+    return root;
   }
 }
 
