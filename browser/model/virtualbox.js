@@ -50,25 +50,28 @@ class VirtualBoxInstall extends InstallableItem {
     .then((output) => {
       return new Promise((resolve, reject) => {
         if (process.platform === 'win32') {
-          if (output.length < 1) {
+          if (output === '%VBOX_INSTALL_PATH%') {
             return Util.executeCommand('echo %VBOX_MSI_INSTALL_PATH%', 1)
-            .catch((err) => { return reject(err) });
+            .then((output) => { return resolve(output); });
           } else {
             return resolve(output);
           }
         } else {
           return Util.findText(output, 'INSTALL_DIR=')
-          .then((result) => {
-            directory = result.split('=')[1];
-            if (selection && directory !== selection[0]) {
-              return reject('selection is not on path');
-            } else {
-              return resolve(directory);
-            }
-          });
+          .then((result) => { return resolve(result.split('=')[1]); });
         }
       });
-    }).then((output) => { return Util.folderContains(output, ['VirtualBox' + extension, 'VBoxManage' + extension]) })
+    }).then((folder) => {
+      return new Promise((resolve, reject) => {
+        if (selection && folder !== selection[0] && folder !== selection[0] + path.sep) {
+          return reject('selection is not on path');
+        } else {
+          directory = folder;
+          resolve(directory);
+        }
+      });
+    })
+    .then((output) => { return Util.folderContains(output, ['VirtualBox' + extension, 'VBoxManage' + extension]) })
     .then((output) => { return Util.executeCommand(path.join(output, 'VBoxManage' + extension) + ' -v', 1) })
     .then((output) => {
       this.existingVersion = parseInt(versionRegex.exec(output)[1]);

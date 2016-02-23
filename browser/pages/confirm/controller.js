@@ -40,7 +40,7 @@ class ConfirmController {
   selectItem(key) {
     let selection = dialog.showOpenDialog({
       properties: [ 'openDirectory' ],
-      defaultPath: this.installables[key][0].existingInstallLocation
+      defaultPath: this.installables[key][0].existingInstallLocation ? this.installables[key][0].existingInstallLocation : this.installerDataSvc.installRoot
     });
     let item = this.installerDataSvc.allInstallables().get(key);
 

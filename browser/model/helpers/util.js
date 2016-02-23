@@ -20,6 +20,22 @@ class Util {
     });
   }
 
+  static executeFile(file, args, outputCode) {
+    return new Promise((resolve, reject) => {
+      child_process.execFile(file, args, (error, stdout, stderr) => {
+        if (error) {
+          reject(error);
+        } else {
+          if (outputCode === 2) {
+            resolve(stderr.toString().trim());
+          } else {
+            resolve(stdout.toString().trim());
+          }
+        }
+      })
+    });
+  }
+
   static folderContains(folder, fileNames) {
     return new Promise((resolve, reject) => {
       fs.readdir(folder, (err, files) => {

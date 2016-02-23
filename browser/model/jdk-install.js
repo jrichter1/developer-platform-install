@@ -40,7 +40,7 @@ class JdkInstall extends InstallableItem {
       selectedFolder = path.join(this.existingInstallLocation, 'bin') + path.sep;
     }
 
-    Util.executeCommand(selectedFolder + 'java' + extension + ' -version', 2)
+    Util.executeFile(selectedFolder + 'java' + extension, ['-version'], 2)
     .then((output) => {
       return new Promise((resolve, reject) => {
         let version = versionRegex.exec(output)[1];
@@ -50,8 +50,8 @@ class JdkInstall extends InstallableItem {
           resolve(true);
         }
       });
-    }).then((result) => Util.executeCommand(selectedFolder + 'javac' + extension + ' -version'), 2)
-    .then((output) => Util.executeCommand(command, 1))
+    }).then((result) => { return Util.executeFile(selectedFolder + 'javac' + extension, ['-version'], 2); })
+    .then((output) => { return Util.executeCommand(command, 1); })
     .then((output) => {
       this.existingInstall = true;
       if (selection && data) {
