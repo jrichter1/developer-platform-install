@@ -13,6 +13,7 @@ import Downloader from './helpers/downloader';
 import Installer from './helpers/installer';
 import Logger from '../services/logger';
 import JdkInstall from './jdk-install';
+import Util from './helpers/util';
 
 class JbdsInstall extends InstallableItem {
   constructor(installerDataSvc, downloadUrl, installFile) {
@@ -30,15 +31,12 @@ class JbdsInstall extends InstallableItem {
 
   checkVersion(location, regex) {
     return new Promise(function (resolve) {
-      fs.readFile(path.join(location, 'readme.txt'), (err, data) => {
-        if (err) {
-          resolve(false);
+      return Util.findText(path.join(location, 'readme.txt'), 'version')
+      .then((text) => {
+        if(regex.exec(text)[1] >= 9) {
+          return resolve(true);
         } else {
-          if(regex.exec(data.toString())[1] >= 9) {
-            resolve(true);
-          } else {
-            resolve(false);
-          }
+          return resolve(false);
         }
       });
     });
@@ -58,10 +56,10 @@ class JbdsInstall extends InstallableItem {
       pattern = selection ? 'studio/jbdevstudio.exe' : '**/studio/jbdevstudio.exe';
     } else {
       directory = selection ? selection[0] : process.env.HOME;
-      pattern = selection ? 'studio/jbdevstudio' : '**/studio/jbdevstudio';
+      pattern = selection ? 'studio/jbdevstudio' : '{*,*/*,*/*/*,*/*/*/*}/studio/jbdevstudio';
     }
 
-    let globster = new Glob(pattern, { cwd: directory });
+    let globster = new Glob(pattern, { cwd: directory, silent: true, nodir: true });
     globster.on('match', (match) => {
       globster.pause();
       let jbdsRoot = path.join(directory, path.dirname(path.dirname(match)));

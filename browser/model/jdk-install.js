@@ -2,13 +2,13 @@
 
 let fs = require('fs');
 let path = require('path');
-let child_process = require('child_process');
 let ipcRenderer = require('electron').ipcRenderer;
 
 import InstallableItem from './installable-item';
 import Downloader from './helpers/downloader';
 import Logger from '../services/logger';
 import Installer from './helpers/installer';
+import Util from './helpers/util';
 
 class JdkInstall extends InstallableItem {
   constructor(installerDataSvc, downloadUrl, installFile) {
@@ -19,29 +19,12 @@ class JdkInstall extends InstallableItem {
     this.downloadedFile = path.join(this.installerDataSvc.tempDir(), 'jdk8.zip');
   }
 
-  executeCommand(command, outputCode) {
-    return new Promise((resolve, reject) => {
-      child_process.exec(command, (error, stdout, stderr) => {
-        if (error) {
-          reject('it failed');
-        } else {
-          if (outputCode === 2) {
-            resolve(stderr.toString());
-          } else {
-            resolve(stdout.toString());
-          }
-        }
-      })
-    });
-  }
-
   checkForExistingInstall(selection, data) {
     let versionRegex = /version\s\"\d+\.(\d+)\.\d+_\d+\"/;
     let selectedFolder = '';
 
     let extension = '';
     let command;
-    let opts = ['java'];
     if (process.platform === 'win32') {
       command = 'where java';
       if (selection) {
@@ -50,16 +33,14 @@ class JdkInstall extends InstallableItem {
     } else {
       command = 'which java';
     }
-    if (selection) {
-      command = '';
-    }
 
     if(selection) {
+      command = '';
       this.existingInstallLocation = selection[0] || this.existingInstallLocation;
       selectedFolder = path.join(this.existingInstallLocation, 'bin') + path.sep;
     }
 
-    this.executeCommand(selectedFolder + 'java' + extension + ' -version', 2)
+    Util.executeCommand(selectedFolder + 'java' + extension + ' -version', 2)
     .then((output) => {
       return new Promise((resolve, reject) => {
         let version = versionRegex.exec(output)[1];
@@ -69,8 +50,8 @@ class JdkInstall extends InstallableItem {
           resolve(true);
         }
       });
-    }).then((result) => this.executeCommand(selectedFolder + 'javac' + extension + ' -version'), 2)
-    .then((output) => this.executeCommand(command, opts, 1))
+    }).then((result) => Util.executeCommand(selectedFolder + 'javac' + extension + ' -version'), 2)
+    .then((output) => Util.executeCommand(command, 1))
     .then((output) => {
       this.existingInstall = true;
       if (selection && data) {
@@ -80,7 +61,9 @@ class JdkInstall extends InstallableItem {
       }
       ipcRenderer.send('checkComplete', JdkInstall.key());
     }).catch((error) => {
-      data[JdkInstall.key()][1] = false;
+      if (data) {
+        data[JdkInstall.key()][1] = false;
+      }
       this.existingInstall = false;
       ipcRenderer.send('checkComplete', JdkInstall.key());
     });
