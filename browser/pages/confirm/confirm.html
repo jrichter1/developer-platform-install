@@ -14,7 +14,7 @@
 </style>
 
 <main class="col-sm-12">
-  <h5>Products and tools that will be installed.</h5>
+  <h5>Setup and confirm.</h5>
   <form name="confirmForm" id="confirmForm" class="form-horizontal" ng-submit="confCtrl.install()">
     <div class="panel panel-default">
       <div class="panel-heading">
@@ -52,6 +52,7 @@
       </div>
     </div>
 
+    <h5>Products and tools that will be installed.</h5>
     <div class="panel panel-default">
       <div class="panel-heading">
         <span class="product-name">Red Hat Container Development Kit</span><span class="product-version">v2</span>
@@ -66,6 +67,7 @@
       </div>
     </div>
 
+    <h5>Required Tools and Runtimes.</h5>
     <div class="panel panel-default">
       <div class="panel-heading">
         <span class="product-name">OpenJDK</span><span class="product-version">v8</span>
@@ -152,7 +154,7 @@
               <strong>The selection is either not a valid VirtualBox installation or you do not have VirtualBox on path. We will install VirtualBox for you.</strong>
             </div>
           </div>
-          <div ng-show="confCtrl.installables['virtualbox'][0].existingVersion && confCtrl.installables['virtualbox'][0].existingVersion + 2 < confCtrl.installables['virtualbox'][0].version.charAt(0)" class="form-group has-warning">
+          <div ng-show="confCtrl.installables['virtualbox'][1] && confCtrl.installables['virtualbox'][0].existingVersion && confCtrl.installables['virtualbox'][0].existingVersion + 2 < confCtrl.installables['virtualbox'][0].version.charAt(0)" class="form-group has-warning">
             <div class="help-block">
               <span class="pficon pficon-warning-triangle-o"></span>
               <strong>The selected VirtualBox installation is more than 2 major versions old. It might still work, but use it at your own risk.</strong>
@@ -162,6 +164,44 @@
             <div ng-show="confCtrl.installables['virtualbox'][1]" class="help-block form-group has-info">
               <input type="checkbox" ng-disabled="!confCtrl.installables['virtualbox'][1]" ng-model="confCtrl.installables['virtualbox'][0].existingInstall">
               <strong>I want to use the existing VirtualBox I provided.</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <span class="product-name">Vagrant</span><span class="product-version">v1</span>
+        <div>A container provisioning tool.</div>
+        <div>
+          <div>
+            Vagrant will be installed. Or you may hit "Browse" and select an existing Vagrant installation instead. Below is what we found on your machine:
+          </div>
+          <div class="input-group">
+            <div ng-init="confCtrl.checkItem('vagrant')" style="position:relative">
+              <input type="text" disabled="true" name="vagrant" placeholder="No Vagrant installation found" class="form-control" ng-model="confCtrl.installables['vagrant'][0].existingInstallLocation" id="vagrant"/>
+            </div>
+            <span class="input-group-btn">
+              <button type="button" ng-click="confCtrl.selectItem('vagrant')" class="btn btn-primary">Browse</button>
+            </span>
+          </div>
+          <div ng-show="!confCtrl.installables['vagrant'][1]" class="form-group has-warning">
+            <div class="help-block">
+              <span class="pficon pficon-warning-triangle-o"></span>
+              <strong>The selection is either not a valid Vagrant installation or you do not have Vagrant on path. We will install Vagrant for you.</strong>
+            </div>
+          </div>
+          <div ng-show="confCtrl.installables['vagrant'][1] && confCtrl.installables['vagrant'][0].existingVersion && confCtrl.installables['vagrant'][0].existingVersion < confCtrl.installables['vagrant'][0].version" class="form-group has-warning">
+            <div class="help-block">
+              <span class="pficon pficon-warning-triangle-o"></span>
+              <strong>The selected Vagrant installation is outdated. It will likely still work, but use it at your own risk.</strong>
+            </div>
+          </div>
+          <div>
+            <div ng-show="confCtrl.installables['vagrant'][1]" class="help-block form-group has-info">
+              <input type="checkbox" ng-disabled="!confCtrl.installables['vagrant'][1]" ng-model="confCtrl.installables['vagrant'][0].existingInstall">
+              <strong>I want to use the existing Vagrant I provided.</strong>
             </div>
           </div>
         </div>
