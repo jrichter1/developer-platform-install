@@ -160,7 +160,7 @@ describe('Virtualbox installer', function() {
 
       installerDataSvc.downloading = true;
 
-      installer.setup(helper);
+      installer.configure(helper);
 
       expect(progressSpy).calledWith('Waiting for all downloads to finish');
       expect(spy).not.called;
@@ -173,7 +173,7 @@ describe('Virtualbox installer', function() {
 
       installerDataSvc.downloading = false;
 
-      installer.setup(helper);
+      installer.configure(helper);
       expect(spy).calledOnce;
     });
 
@@ -204,7 +204,7 @@ describe('Virtualbox installer', function() {
         '/Liwe',
         path.join(installerDataSvc.installDir(), 'vbox.log')
       ];
-      
+
       installer.installMsi(helper);
 
       expect(spy).to.have.been.calledOnce;
