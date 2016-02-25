@@ -29,7 +29,7 @@ class VagrantInstall extends InstallableItem {
     let latestRegex = /Latest Version:\s(\d+\.\d+\.\d+)/;
     let command, directory;
     let extension = '';
-    let subfolder = path.sep + 'bin'
+    let subfolder = path.sep + 'bin';
 
     if (process.platform === 'win32') {
       command = 'where vagrant';
@@ -45,7 +45,7 @@ class VagrantInstall extends InstallableItem {
     .then((output) => {
       return new Promise((resolve, reject) => {
         if (process.platform === 'win32') {
-          return resolve(path.dirname(output));
+          return resolve(path.dirname(path.dirname(output)));
         } else {
           return Util.findText(output, 'VAGRANT_DIR=')
           .then((result) => { return resolve(result.split('=')[1].replace(/["]+/g, '')); });
