@@ -147,6 +147,16 @@ let mainModule =
                     null,
                     'developer-studio')
             );
+
+            //Mocked installation model - nothing gets installed
+            //initiate by passing in environment variable PDKI_MOCK=true or PDKI_MOCK=1
+            if (process.env['PDKI_MOCK'] === 'true' || process.env['PDKI_MOCK'] === '1') {
+              //import the overrider module dynamically so it does not get included in normal runs
+              System.import('../mockup/override').then(function(m) {
+                let over = new m.OverrideService();
+                over.overrideModel();
+              });
+            }
           }]);
 
 export default mainModule;

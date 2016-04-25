@@ -27,7 +27,7 @@ class ConfirmController {
     confCtrl.numberOfExistingInstallations = 0;
 
     confCtrl.showCloseDialog = false;
-    
+
     this.installables = {};
     $scope.checkboxModel = {};
 
@@ -83,26 +83,26 @@ class ConfirmController {
 //    this.timeout( () => {
       // Switch this boolean flag when the app is done looking for existing installations.
       confCtrl.isDisabled = !confCtrl.isDisabled;
-      
+
       // Count the number of existing installations.
       for (var [key, value] of confCtrl.installerDataSvc.allInstallables().entries()) {
         if (confCtrl.sc.checkboxModel[key].hasOption('detected')) {
           ++confCtrl.numberOfExistingInstallations;
         }
       }
-  
+
       // Set the message depending on if the view is disabled or not.
       if (confCtrl.isDisabled) {
         confCtrl.installedSearchNote = '  The system is checking if you have any installed components.';
       } else {
         confCtrl.installedSearchNote = `  We found ${confCtrl.numberOfExistingInstallations} installed component that meets the requirement.`;
       }
-      
+
       // Call the digest cycle so that the view gets updated.
       confCtrl.sc.$apply();
 //    }, 5000);
   }
-  
+
   // Open up a browse dialog and select the dir that has the installed product you are looking for.
   selectItem(key) {
     let selection = dialog.showOpenDialog({
@@ -148,7 +148,7 @@ class ConfirmController {
     Logger.info('Going back a page');
     this.router.go('location');
   }
-  
+
   setCloseDialog () {
     confCtrl.showCloseDialog = !confCtrl.showCloseDialog;
   }

@@ -28,7 +28,7 @@ class AccountController {
     this.pdkVersion = pjson.version;
     this.isLoginBtnClicked = false;
   }
-  
+
   login() {
     this.authFailed = false;
     this.tandcNotSigned = false;
