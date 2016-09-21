@@ -6,7 +6,7 @@ import path from 'path';
 let reqs = Util.resolveFile('.', 'requirements.json');
 
 class InstallableItem {
-  constructor(keyName, installTime, downloadUrl, installFile, targetFolderName, installerDataSvc) {
+  constructor(keyName, downloadUrl, targetFolderName, installerDataSvc) {
     this.keyName = keyName;
 
     let requirement;
@@ -21,13 +21,11 @@ class InstallableItem {
     this.productName = requirement.name;
     this.productVersion = requirement.version;
     this.productDesc = requirement.description;
-    this.installTime = installTime;
     this.targetFolderName = targetFolderName;
     this.installerDataSvc = installerDataSvc;
     this.existingInstall = false;
     this.existingInstallLocation = '';
     this.existingVersion = '';
-    this.useDownload = true;
     this.downloaded = false;
     this.installed = false;
 
@@ -43,11 +41,6 @@ class InstallableItem {
     }
 
     this.downloadUrl = downloadUrl;
-
-    if (installFile != null && installFile != '') {
-      this.useDownload = false;
-      this.installFile = installFile;
-    }
 
     this.isCollapsed = true;
     this.option = new Set();
@@ -74,10 +67,6 @@ class InstallableItem {
     return this.productDesc;
   }
 
-  getInstallTime() {
-    return this.installTime;
-  }
-
   getDownloadUrl() {
     return this.downloadUrl;
   }
@@ -99,7 +88,7 @@ class InstallableItem {
   }
 
   isDownloadRequired() {
-    return this.useDownload;
+    // To be overridden
   }
 
   setDownloadComplete() {

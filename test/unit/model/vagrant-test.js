@@ -73,25 +73,10 @@ describe('Vagrant installer', function() {
     sandbox.restore();
   });
 
-  it('should not download vagrant when an installation exists', function() {
-    let vagrant = new VagrantInstall(installerDataSvc, 'url', 'file');
-    expect(vagrant.useDownload).to.be.false;
-  });
-
-  it('should fail when no url is set and installed file not defined', function() {
+  it('should fail when no url is set', function() {
     expect(function() {
       new VagrantInstall(installerDataSvc, null, null);
     }).to.throw('No download URL set');
-  });
-
-  it('should fail when no url is set and installed file is empty', function() {
-    expect(function() {
-      new VagrantInstall(installerDataSvc, null, '');
-    }).to.throw('No download URL set');
-  });
-
-  it('should download vagrant when no installation is found', function() {
-    expect(new VagrantInstall(installerDataSvc, 'url', null).useDownload).to.be.true;
   });
 
   it('should download vagrant installer to temporary folder as vagrant.zip', function() {

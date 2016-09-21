@@ -100,7 +100,7 @@ describe('CDK installer', function() {
       ocUrl = reqs['oc.zip'].url;
 
   beforeEach(function () {
-    installer = new CDKInstall(installerDataSvc, 900, cdkUrl, cdkBoxUrl, ocUrl,  null, null, null);
+    installer = new CDKInstall(installerDataSvc, cdkUrl, cdkBoxUrl, ocUrl,  null, null, null);
     sandbox = sinon.sandbox.create();
   });
 
@@ -108,25 +108,10 @@ describe('CDK installer', function() {
     sandbox.restore();
   });
 
-  it('should not download cdk when an installation exists', function() {
-    let cdk = new CDKInstall(installerDataSvc, 900, 'cdkUrl', 'cdkBoxUrl', 'ocUrl', 'installFile');
-    expect(cdk.useDownload).to.be.false;
-  });
-
-  it('should fail when some download url is not set and installed file not defined', function() {
-    expect(function() {
-      new CDKInstall(installerDataSvc, 900, null, 'ocUrl', 'pscpUrl', null);
-    }).to.throw('No download URL set');
-  });
-
   it('should fail when no url is set and installed file is empty', function() {
     expect(function() {
-      new CDKInstall(installerDataSvc, 900, null, 'ocUrl', 'pscpUrl', '');
+      new CDKInstall(installerDataSvc, null, 'ocUrl', 'pscpUrl', '');
     }).to.throw('No download URL set');
-  });
-
-  it('should download files when no installation is found', function() {
-    expect(new CDKInstall(installerDataSvc, 900, 'cdkUrl', 'cdkBoxUrl', 'ocUrl', null).useDownload).to.be.true;
   });
 
   describe('files download', function() {
@@ -147,7 +132,7 @@ describe('CDK installer', function() {
     });
 
     it('should call a correct downloader request for each file', function() {
-      installer = new CDKInstall(installerDataSvc, 900, cdkUrl, cdkBoxUrl, ocUrl,  null);
+      installer = new CDKInstall(installerDataSvc, cdkUrl, cdkBoxUrl, ocUrl,  null);
       installer.downloadInstaller(fakeProgress, function() {}, function() {});
 
       //we download 1 out of 4 files with authentication

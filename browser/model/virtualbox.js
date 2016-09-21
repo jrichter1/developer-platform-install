@@ -12,11 +12,9 @@ import Util from './helpers/util';
 import Version from './helpers/version';
 
 class VirtualBoxInstall extends InstallableItem {
-  constructor(version, revision, installerDataSvc, downloadUrl, installFile, targetFolderName, sha256) {
+  constructor(version, revision, installerDataSvc, downloadUrl, targetFolderName, sha256) {
     super('virtualbox',
-          700,
           downloadUrl,
-          installFile,
           targetFolderName,
           installerDataSvc);
 

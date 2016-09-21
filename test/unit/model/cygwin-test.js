@@ -72,25 +72,10 @@ describe('Cygwin installer', function() {
     sandbox.restore();
   });
 
-  it('should not download cygwin when an installation exists', function() {
-    let cygwin = new CygwinInstall(installerDataSvc, 'url', 'file');
-    expect(cygwin.useDownload).to.be.false;
-  });
-
-  it('should fail when no url is set and installed file not defined', function() {
+  it('should fail when no url is set', function() {
     expect(function() {
       new CygwinInstall(installerDataSvc, null, null);
     }).to.throw('No download URL set');
-  });
-
-  it('should fail when no url is set and installed file is empty', function() {
-    expect(function() {
-      new CygwinInstall(installerDataSvc, null, '');
-    }).to.throw('No download URL set');
-  });
-
-  it('should download cygwin when no installation is found', function() {
-    expect(new CygwinInstall(installerDataSvc, 'url', null).useDownload).to.be.true;
   });
 
   it('should download cygwin installer to temporary folder as ssh-rsync.zip', function() {

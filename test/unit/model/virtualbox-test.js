@@ -72,25 +72,10 @@ describe('Virtualbox installer', function() {
     sandbox.restore();
   });
 
-  it('should not download virtualbox when an installation exists', function() {
-    let jdk = new VirtualBoxInstall('ver', 'rev', installerDataSvc, 'url', 'file');
-    expect(jdk.useDownload).to.be.false;
-  });
-
-  it('should fail when no url is set and installed file not defined', function() {
+  it('should fail when no url is set', function() {
     expect(function() {
       new VirtualBoxInstall('ver', 'rev', installerDataSvc, null, null);
     }).to.throw('No download URL set');
-  });
-
-  it('should fail when no url is set and installed file is empty', function() {
-    expect(function() {
-      new VirtualBoxInstall('ver', 'rev', installerDataSvc, null, '');
-    }).to.throw('No download URL set');
-  });
-
-  it('should download virtualbox when no installation is found', function() {
-    expect(new VirtualBoxInstall('ver', 'rev', installerDataSvc, 'url', null).useDownload).to.be.true;
   });
 
   it('should download virtualbox installer to temporary folder as virtualbox.exe', function() {

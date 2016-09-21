@@ -14,11 +14,9 @@ import Util from './helpers/util';
 
 
 class CygwinInstall extends InstallableItem {
-  constructor(installerDataSvc, downloadUrl, installFile, targetFolderName, sha256) {
+  constructor(installerDataSvc, downloadUrl, targetFolderName, sha256) {
     super('cygwin',
-          720,
           downloadUrl,
-          installFile,
           targetFolderName,
           installerDataSvc);
 

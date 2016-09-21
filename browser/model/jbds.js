@@ -17,11 +17,9 @@ import CDKInstall from './cdk.js';
 import Util from './helpers/util';
 
 class JbdsInstall extends InstallableItem {
-  constructor(installerDataSvc, downloadUrl, installFile, targetFolderName, jbdsSha256) {
+  constructor(installerDataSvc, downloadUrl, targetFolderName, jbdsSha256) {
     super('jbds',
-          1600,
           downloadUrl,
-          installFile,
           targetFolderName,
           installerDataSvc);
 

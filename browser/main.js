@@ -84,31 +84,26 @@ let mainModule =
                   reqs['virtualbox.exe'].revision,
                   installerDataSvc,
                   reqs['virtualbox.exe'].url,
-                  null,
                   'virtualbox',
                   reqs['virtualbox.exe'].sha256sum),
 
                 cygwin = new CygwinInstall(
                   installerDataSvc,
                   reqs['cygwin.exe'].url,
-                  null,
                   'cygwin',
                   reqs['cygwin.exe'].sha256sum),
 
                 vagrant = new VagrantInstall(
                   installerDataSvc,
                   reqs['vagrant.msi'].url,
-                  null,
                   'vagrant',
                   reqs['vagrant.msi'].sha256sum),
 
                 cdk = new CDKInstall(
                   installerDataSvc,
-                  $timeout,
                   reqs['cdk.zip'].dmUrl,
                   reqs['rhel-vagrant-virtualbox.box'].dmUrl,
                   reqs['oc.zip'].url,
-                  null,
                   'cdk',
                   reqs['cdk.zip'].sha256sum,
                   reqs['rhel-vagrant-virtualbox.box'].sha256sum,
@@ -117,7 +112,6 @@ let mainModule =
                 jdk = new JdkInstall(
                   installerDataSvc,
                   reqs['jdk.msi'].dmUrl,
-                  null,
                   reqs['jdk.msi'].prefix,
                   'jdk8',
                   reqs['jdk.msi'].sha256sum),
@@ -125,7 +119,6 @@ let mainModule =
                 jbds = new JbdsInstall(
                   installerDataSvc,
                   reqs['jbds.jar'].dmUrl,
-                  null,
                   'developer-studio',
                   reqs['jbds.jar'].sha256sum);
 

@@ -14,15 +14,12 @@ import Installer from './helpers/installer';
 import Util from './helpers/util.js';
 
 class CDKInstall extends InstallableItem {
-  constructor(installerDataSvc, $timeout, cdkUrl, cdkBoxUrl, ocUrl, installFile, targetFolderName, cdkSha256, boxSha256, ocSha256) {
+  constructor(installerDataSvc, cdkUrl, cdkBoxUrl, ocUrl, targetFolderName, cdkSha256, boxSha256, ocSha256) {
     super('cdk',
-          900,
           cdkUrl,
-          installFile,
           targetFolderName,
           installerDataSvc);
 
-    this.$timeout = $timeout;
     this.cdkBoxUrl = cdkBoxUrl;
     this.ocUrl = ocUrl;
 

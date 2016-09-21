@@ -79,25 +79,10 @@ describe('devstudio installer', function() {
     sandbox.restore();
   });
 
-  it('should not download jbds when an installation exists', function() {
-    let jbds = new JbdsInstall(installerDataSvc, 'url', 'file');
-    expect(jbds.useDownload).to.be.false;
-  });
-
-  it('should fail when no url is set and installed file not defined', function() {
+  it('should fail when no url is set', function() {
     expect(function() {
       new JbdsInstall(installerDataSvc, null, null);
     }).to.throw('No download URL set');
-  });
-
-  it('should fail when no url is set and installed file is empty', function() {
-    expect(function() {
-      new JbdsInstall(installerDataSvc, null, '');
-    }).to.throw('No download URL set');
-  });
-
-  it('should download jbds when no installation is found', function() {
-    expect(new JbdsInstall(installerDataSvc, 'url', null).useDownload).to.be.true;
   });
 
   it('should download jbds installer to temporary folder as jbds.jar', function() {
