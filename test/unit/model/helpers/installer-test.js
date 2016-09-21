@@ -19,10 +19,9 @@ describe('Installer', function() {
   let fakeProgress = {
     setStatus: function (desc) { return; },
     setCurrent: function (val) {},
-    setLabel: function (label) {},
     setComplete: function() {},
     setTotalDownloadSize: function(size) {},
-    downloaded: function(amt, time) {}
+    getTotalDownloadSize: function() {}
   };
   let failureCallback = (err) => { return err; };
   let installer = new Installer('test', fakeProgress, () => { return 'success'; }, failureCallback);

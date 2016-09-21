@@ -39,10 +39,9 @@ describe('Virtualbox installer', function() {
   let fakeProgress = {
     setStatus: function (desc) { return; },
     setCurrent: function (val) {},
-    setLabel: function (label) {},
     setComplete: function() {},
     setTotalDownloadSize: function(size) {},
-    downloaded: function(amt, time) {}
+    getTotalDownloadSize: function() {}
   };
 
   before(function() {
@@ -113,15 +112,6 @@ describe('Virtualbox installer', function() {
 
       expect(spy).to.have.been.calledOnce;
       expect(spy).to.have.been.calledWith('Downloading');
-    });
-
-    it('should write the data into temp/virtualbox.exe', function() {
-      let spy = sandbox.spy(fs, 'createWriteStream');
-
-      installer.downloadInstaller(fakeProgress, function() {}, function() {});
-
-      expect(spy).to.have.been.calledOnce;
-      expect(spy).to.have.been.calledWith(path.join('tempDirectory', 'virtualbox.exe'));
     });
 
     it('should call downloader#download with the specified parameters once', function() {

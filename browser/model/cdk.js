@@ -63,8 +63,6 @@ class CDKInstall extends InstallableItem {
         password = this.installerDataSvc.getPassword();
 
     if(!fs.existsSync(path.join(this.downloadFolder, this.boxName))) {
-      let cdkBoxWriteStream = fs.createWriteStream(this.cdkBoxDownloadedFile);
-      this.downloader.setWriteStream(cdkBoxWriteStream);
       this.downloader.downloadAuth(this.cdkBoxUrl,username,password,this.cdkBoxDownloadedFile,this.boxSha256);
     } else {
       this.cdkBoxDownloadedFile = path.join(this.downloadFolder, this.boxName);
@@ -72,8 +70,6 @@ class CDKInstall extends InstallableItem {
     }
 
     if(!fs.existsSync(path.join(this.downloadFolder, this.cdkFileName))) {
-      let cdkWriteStream = fs.createWriteStream(this.cdkDownloadedFile);
-      this.downloader.setWriteStream(cdkWriteStream);
       this.downloader.downloadAuth(this.getDownloadUrl(),username,password,this.cdkDownloadedFile, this.cdkSha256);
     } else {
       this.cdkDownloadedFile = path.join(this.downloadFolder, this.cdkFileName);
@@ -81,8 +77,6 @@ class CDKInstall extends InstallableItem {
     }
 
     if(!fs.existsSync(path.join(this.downloadFolder, this.ocFileName))) {
-      let ocWriteStream = fs.createWriteStream(this.ocDownloadedFile);
-      this.downloader.setWriteStream(ocWriteStream);
       this.downloader.download(this.ocUrl,this.ocDownloadedFile,this.ocSha256);
     } else {
       this.ocDownloadedFile = path.join(this.downloadFolder, this.ocFileName);

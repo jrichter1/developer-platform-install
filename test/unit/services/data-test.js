@@ -38,8 +38,11 @@ describe('InstallerDataService', function() {
 
   let logStub, fsStub, infoStub, errorStub, fxExtraStub;
   let fakeProgress = {
-    installTrigger: function() {},
-    setStatus: function(status) {}
+    setStatus: function (desc) { return; },
+    setCurrent: function (val) {},
+    setComplete: function() {},
+    setTotalDownloadSize: function(size) {},
+    getTotalDownloadSize: function() {}
   };
 
   before(function() {

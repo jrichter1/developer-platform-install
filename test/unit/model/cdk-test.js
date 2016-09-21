@@ -43,10 +43,9 @@ describe('CDK installer', function() {
   let fakeProgress = {
     setStatus: function (desc) { return; },
     setCurrent: function (val) {},
-    setLabel: function (label) {},
     setComplete: function() {},
     setTotalDownloadSize: function(size) {},
-    downloaded: function(amt, time) {}
+    getTotalDownloadSize: function() {}
   };
 
   installerDataSvc = sinon.stub(fakeData);
@@ -145,20 +144,6 @@ describe('CDK installer', function() {
 
       expect(spy).to.have.been.calledOnce;
       expect(spy).to.have.been.calledWith('Downloading');
-    });
-
-    it('should write the data into temp folder', function() {
-      let streamSpy = sandbox.spy(Downloader.prototype, 'setWriteStream');
-      let fsSpy = sandbox.spy(fs, 'createWriteStream');
-
-      installer.downloadInstaller(fakeProgress, function() {}, function() {});
-
-      //expect 4 streams to be set and created
-      expect(streamSpy.callCount).to.equal(3);
-      expect(fsSpy.callCount).to.equal(3);
-      expect(fsSpy).calledWith(installer.cdkDownloadedFile);
-      expect(fsSpy).calledWith(installer.cdkBoxDownloadedFile);
-      expect(fsSpy).calledWith(installer.ocDownloadedFile);
     });
 
     it('should call a correct downloader request for each file', function() {

@@ -8,6 +8,7 @@ import Downloader from 'model/helpers/downloader';
 import Logger from 'services/logger';
 import { Readable, PassThrough, Writable } from 'stream';
 import Hash from 'model/helpers/hash';
+import fs from 'fs-extra';
 chai.use(sinonChai);
 
 describe('Downloader', function() {
@@ -15,10 +16,9 @@ describe('Downloader', function() {
   let fakeProgress = {
     setStatus: function (desc) { return; },
     setCurrent: function (val) {},
-    setLabel: function (label) {},
     setComplete: function() {},
     setTotalDownloadSize: function(size) {},
-    downloaded: function(amt, time) {},
+    getTotalDownloadSize: function() {}
   };
   let sandbox;
   let succ = function() {};
@@ -94,7 +94,6 @@ describe('Downloader', function() {
     let streamSpy = sandbox.spy(stream, 'close');
 
     downloader = new Downloader(fakeProgress, function() {}, errorSpy);
-    downloader.setWriteStream(stream);
     downloader.errorHandler(stream, 'some error');
 
     expect(streamSpy).to.be.calledOnce;
@@ -107,7 +106,6 @@ describe('Downloader', function() {
     let streamSpy = sandbox.spy(stream, 'end');
 
     downloader = new Downloader(fakeProgress, function() {}, function() {});
-    downloader.setWriteStream(stream);
     downloader.endHandler(stream);
 
     expect(streamSpy).to.be.calledOnce;
@@ -154,8 +152,8 @@ describe('Downloader', function() {
 
     it('should make a request with given options', function() {
       let requestGetSpy = sandbox.spy(request, 'get');
+      sandbox.stub(fs, 'createWriteStream').returns(new PassThrough());
       downloader = new Downloader(fakeProgress, function() {}, function() {});
-      downloader.setWriteStream(new PassThrough());
       downloader.download(options3);
 
       expect(requestGetSpy).to.be.calledOnce;
@@ -164,8 +162,8 @@ describe('Downloader', function() {
 
     it('should make a request with given url in options', function() {
       let requestGetSpy = sandbox.spy(request, 'get');
+      sandbox.stub(fs, 'createWriteStream').returns(new PassThrough());
       downloader = new Downloader(fakeProgress, function() {}, function() {});
-      downloader.setWriteStream(new PassThrough());
       downloader.download(options);
 
       expect(requestGetSpy).to.be.calledOnce;
@@ -175,14 +173,13 @@ describe('Downloader', function() {
 
     it('should make a request with \'User-Agent\' header set', function() {
       let requestGetSpy = sandbox.spy(request, 'get');
+      sandbox.stub(fs, 'createWriteStream').returns(new PassThrough());
       downloader = new Downloader(fakeProgress, function() {}, function() {});
-      downloader.setWriteStream(new PassThrough());
       downloader.download(options);
 
       expect(requestGetSpy).to.be.calledOnce;
       expect(requestGetSpy.args[0][0].hasOwnProperty('headers')).to.be.true;
       expect(requestGetSpy.args[0][0].headers.hasOwnProperty('User-Agent')).to.be.true;
-
     });
 
     it('should call endHandler when end event is emitted', function() {
@@ -191,8 +188,8 @@ describe('Downloader', function() {
       sandbox.stub(request, 'get').returns(response);
 
       let stream = new PassThrough();
+      sandbox.stub(fs, 'createWriteStream').returns(stream);
       downloader = new Downloader(fakeProgress, function() {}, function() {});
-      downloader.setWriteStream(stream);
       let endHandler = sandbox.stub(downloader, 'endHandler');
       downloader.download(options);
       response.emit('end');
@@ -207,8 +204,8 @@ describe('Downloader', function() {
       let error = new Error('something bad happened');
 
       let stream = new Writable();
+      sandbox.stub(fs, 'createWriteStream').returns(stream);
       downloader = new Downloader(fakeProgress, function() {}, function() {});
-      downloader.setWriteStream(stream);
       let errorHandler = sandbox.stub(downloader, 'errorHandler');
       downloader.download(options);
       response.emit('error', error);
@@ -223,8 +220,8 @@ describe('Downloader', function() {
 
       let stream = new Writable();
 
+      sandbox.stub(fs, 'createWriteStream').returns(stream);
       downloader = new Downloader(fakeProgress, function() {}, function() {});
-      downloader.setWriteStream(stream);
       let successSpy = sandbox.spy(downloader, 'success');
 
       stream['path'] = 'file1';
@@ -242,8 +239,8 @@ describe('Downloader', function() {
       let error = new Error('something bad happened');
 
       let stream = new Writable();
+      sandbox.stub(fs, 'createWriteStream').returns(stream);
       downloader = new Downloader(fakeProgress, function() {}, function() {}, 2);
-      downloader.setWriteStream(stream);
       let errorHandler = sandbox.stub(downloader, 'errorHandler');
       let successSpy = sandbox.spy(downloader, 'success');
       downloader.download(options);
@@ -261,8 +258,8 @@ describe('Downloader', function() {
       let error = new Error('something bad happened');
 
       let stream = new Writable();
+      sandbox.stub(fs, 'createWriteStream').returns(stream);
       downloader = new Downloader(fakeProgress, function() {}, function() {}, 2);
-      downloader.setWriteStream(stream);
       let successHandler = sandbox.stub(downloader, 'success');
       downloader.download(options);
       downloader.closeHandler('file1');

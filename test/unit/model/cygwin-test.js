@@ -39,10 +39,9 @@ describe('Cygwin installer', function() {
   let fakeProgress = {
     setStatus: function (desc) { return; },
     setCurrent: function (val) {},
-    setLabel: function (label) {},
     setComplete: function() {},
     setTotalDownloadSize: function(size) {},
-    downloaded: function(amt, time) {}
+    getTotalDownloadSize: function() {}
   };
 
   before(function() {
@@ -113,17 +112,6 @@ describe('Cygwin installer', function() {
 
       expect(spy).to.have.been.calledOnce;
       expect(spy).to.have.been.calledWith('Downloading');
-    });
-
-    it('should write the data into temp/cygwin.exe', function() {
-      let spy = sandbox.spy(fs, 'createWriteStream');
-      let streamSpy = sandbox.spy(Downloader.prototype, 'setWriteStream');
-
-      installer.downloadInstaller(fakeProgress, function() {}, function() {});
-
-      expect(streamSpy).to.have.been.calledOnce;
-      expect(spy).to.have.been.calledOnce;
-      expect(spy).to.have.been.calledWith(path.join('tempDirectory', 'cygwin.exe'));
     });
 
     it('should call a correct downloader request with the specified parameters once', function() {

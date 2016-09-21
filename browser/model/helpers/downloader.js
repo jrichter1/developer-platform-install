@@ -25,10 +25,6 @@ class Downloader {
     }
   }
 
-  setWriteStream(stream) {
-    this.writeStream = stream;
-  }
-
   errorHandler(stream, err) {
     stream.close();
     this.failure(err);
@@ -90,12 +86,13 @@ class Downloader {
       this.downloads.get(file)['failure'] = false;
     }
     if(--this.totalDownloads == 0 ) {
+      this.progress.setCurrent(this.progress.getTotalDownloadSize());
       this.success();
     }
   }
 
   download(options,file,sha) {
-    let stream = this.writeStream;
+    let stream = fs.createWriteStream(file);
     this.downloads.set(stream.path,{options,sha,'failure': false});
     request.get(this.setAdditionalOptions(options))
       .on('error', this.errorHandler.bind(this, stream))
@@ -107,19 +104,13 @@ class Downloader {
   }
 
   downloadAuth(options, username, password, file, sha) {
-    let stream = this.writeStream;
-    this.downloads.set(stream.path,{options,username,password,sha,'failure': false});
-    request.get(this.setAdditionalOptions(options))
-      .auth(username, password)
-      .on('error', this.errorHandler.bind(this, stream))
-      .on('response', this.responseHandler.bind(this))
-      .on('data', this.dataHandler.bind(this))
-      .on('end', this.endHandler.bind(this, stream))
-      .pipe(stream)
-      .on('close', this.closeHandler.bind(this,stream.path,sha,options));
+    let authOptions = options;
+    authOptions.auth = {
+      user: username,
+      pass: password
+    };
+    this.download(authOptions, file, sha);
   }
-
-
 
   restartDownload() {
     this.downloadSize = 0;
@@ -127,13 +118,8 @@ class Downloader {
     this.currentSize = 0;
     this.progress.setStatus('Downloading');
     for (var [key, value] of this.downloads.entries()) {
-      if (value['failure'] && value.failure) {
-        this.writeStream = fs.createWriteStream(key);
-        if(value.hasOwnProperty('username')) {
-          this.downloadAuth(value.options,value.username,value.password,key,value.sha);
-        } else {
-          this.download(value.options,key,value.sha);
-        }
+      if (value.failure) {
+        this.download(value.options,key,value.sha);
       }
     }
   }

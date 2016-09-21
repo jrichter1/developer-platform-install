@@ -121,9 +121,7 @@ class JbdsInstall extends InstallableItem {
     progress.setStatus('Downloading');
     if(!this.hasExistingInstall() && !fs.existsSync(this.bundledFile)) {
       // Need to download the file
-      let writeStream = fs.createWriteStream(this.downloadedFile);
       this.downloader = new Downloader(progress, success, failure);
-      this.downloader.setWriteStream(writeStream);
       this.downloader.downloadAuth(this.downloadUrl,username,password,this.downloadedFile,this.jbdsSha256);
     } else {
       this.downloadedFile = this.bundledFile;

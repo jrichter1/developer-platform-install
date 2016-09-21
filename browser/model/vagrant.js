@@ -113,9 +113,7 @@ class VagrantInstall extends InstallableItem {
     progress.setStatus('Downloading');
     if(this.isDownloadRequired() && this.selectedOption === "install") {
       // Need to download the file
-      let writeStream = fs.createWriteStream(this.downloadedFile);
       this.downloader = new Downloader(progress, success, failure);
-      this.downloader.setWriteStream(writeStream);
       this.downloader.download(this.downloadUrl,this.downloadedFile,this.sha256);
     } else {
       this.downloadedFile = this.bundledFile;

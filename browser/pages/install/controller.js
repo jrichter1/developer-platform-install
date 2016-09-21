@@ -124,6 +124,10 @@ class ProgressState {
     this.totalSize = size;
   }
 
+  getTotalDownloadSize() {
+    return this.totalSize;
+  }
+
   setCurrent(newVal) {
     if (newVal > this.currentAmount && newVal < this.totalSize) {
     	this.currentAmount = newVal;
