@@ -15,20 +15,16 @@ import Util from './helpers/util';
 import Version from './helpers/version';
 
 class JdkInstall extends InstallableItem {
-  constructor(installerDataSvc, downloadUrl, prefix, targetFolderName,jdkSha256) {
+  constructor(installerDataSvc, downloads, targetFolderName) {
     super('jdk',
-          downloadUrl,
+          downloads,
           targetFolderName,
           installerDataSvc);
 
-    this.downloadedFileName = 'jdk.msi';
-    this.jdkSha256 = jdkSha256;
-    this.bundledFile = path.join(this.downloadFolder, this.downloadedFileName);
-    this.downloadedFile = path.join(this.installerDataSvc.tempDir(), this.downloadedFileName);
     this.msiSearchScript = path.join(this.installerDataSvc.tempDir(), 'search-openjdk-msi.ps1');
     this.existingVersion = '';
     this.minimumVersion = '1.8.0';
-    this.jdkZipEntryPrefix = prefix;
+    this.jdkZipEntryPrefix = this.files['jdk.msi'].prefix;
     this.openJdkMsi = false;
     //this.addOption('install',this.version,this.installerDataSvc.jdkDir());
     //this.addOption('detected', this.minimumVersion, '', true);
@@ -133,20 +129,6 @@ class JdkInstall extends InstallableItem {
 
   static key() {
     return 'jdk';
-  }
-
-  downloadInstaller(progress, success, failure) {
-    let username = this.installerDataSvc.getUsername(),
-        password = this.installerDataSvc.getPassword();
-    progress.setStatus('Downloading');
-    if(this.selectedOption == 'install' && !fs.existsSync(this.bundledFile)) {
-      // Need to download the file
-      this.downloader = new Downloader(progress, success, failure);
-      this.downloader.downloadAuth(this.downloadUrl,username,password,this.downloadedFile,this.jdkSha256);
-    } else {
-      this.downloadedFile = this.bundledFile;
-      success();
-    }
   }
 
   install(progress, success, failure) {

@@ -20,7 +20,6 @@ import JbdsInstall from './model/jbds';
 import VagrantInstall from './model/vagrant';
 import CygwinInstall from './model/cygwin';
 import CDKInstall from './model/cdk';
-import Util from './model/helpers/util';
 
 let mainModule =
       angular.module('devPlatInstaller', ['ui.router', 'base64', 'ngMessages'])
@@ -77,52 +76,37 @@ let mainModule =
               });
           }])
           .run( ['$rootScope', '$location', '$timeout', 'installerDataSvc', 'request', ($rootScope, $location, $timeout, installerDataSvc, request) => {
-            let reqs = Util.resolveFile('.', 'requirements.json');
-
             let virtualbox = new VirtualBoxInstall(
-                  reqs['virtualbox.exe'].version,
-                  reqs['virtualbox.exe'].revision,
                   installerDataSvc,
-                  reqs['virtualbox.exe'].url,
-                  'virtualbox',
-                  reqs['virtualbox.exe'].sha256sum),
+                  ['virtualbox.exe'],
+                  'virtualbox'),
 
                 cygwin = new CygwinInstall(
                   installerDataSvc,
-                  reqs['cygwin.exe'].url,
-                  'cygwin',
-                  reqs['cygwin.exe'].sha256sum),
+                  ['cygwin.exe'],
+                  'cygwin'),
 
                 vagrant = new VagrantInstall(
                   installerDataSvc,
-                  reqs['vagrant.msi'].url,
-                  'vagrant',
-                  reqs['vagrant.msi'].sha256sum),
+                  ['vagrant.msi'],
+                  'vagrant'),
 
                 cdk = new CDKInstall(
                   installerDataSvc,
-                  reqs['cdk.zip'].dmUrl,
-                  reqs['rhel-vagrant-virtualbox.box'].dmUrl,
-                  reqs['oc.zip'].url,
-                  'cdk',
-                  reqs['cdk.zip'].sha256sum,
-                  reqs['rhel-vagrant-virtualbox.box'].sha256sum,
-                  reqs['oc.zip'].sha256sum),
+                  ['cdk.zip', 'rhel-vagrant-virtualbox.box', 'oc.zip'],
+                  'cdk'),
 
                 jdk = new JdkInstall(
                   installerDataSvc,
-                  reqs['jdk.msi'].dmUrl,
-                  reqs['jdk.msi'].prefix,
-                  'jdk8',
-                  reqs['jdk.msi'].sha256sum),
+                  ['jdk.msi'],
+                  'jdk8'),
 
                 jbds = new JbdsInstall(
                   installerDataSvc,
-                  reqs['jbds.jar'].dmUrl,
-                  'developer-studio',
-                  reqs['jbds.jar'].sha256sum);
+                  ['jbds.jar'],
+                  'developer-studio');
 
-              installerDataSvc.addItemsToInstall(virtualbox,cygwin,vagrant,cdk,jdk,jbds);
+              installerDataSvc.addItemsToInstall(virtualbox, cygwin, vagrant, cdk, jdk, jbds);
 
               jdk.thenInstall(jbds);
               jdk.thenInstall(virtualbox).thenInstall(cygwin).thenInstall(vagrant).thenInstall(cdk);

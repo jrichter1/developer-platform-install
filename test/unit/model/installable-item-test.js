@@ -20,8 +20,8 @@ describe('Installable Item', function() {
 
   it('should return passed parameter for thenInstall call', function() {
     let svc = new InstallerDataService();
-    let item1 = new InstallableItem('jdk', 1000, 'url', 'installFile', 'targetFolderName', svc);
-    let item2 = new InstallableItem('cygwin', 1000, 'url', 'installFile', 'targetFolderName', svc);
+    let item1 = new InstallableItem('jdk', ['jdk.msi'], 'targetFolderName', svc);
+    let item2 = new InstallableItem('cygwin', ['cygwin.exe'], 'targetFolderName', svc);
     item1.thenInstall(item2);
     expect(item2.installAfter).to.be.equal(item1);
     expect(item2.getInstallAfter()).to.be.equal(item1);
@@ -30,12 +30,12 @@ describe('Installable Item', function() {
 
   it('should ignore skipped installers and return first selected for installation', function() {
     let svc = new InstallerDataService();
-    let item1 = new InstallableItem('jdk', 1000, 'url', 'installFile', 'targetFolderName', svc);
-    let item2 = new InstallableItem('cygwin', 1000, 'url', 'installFile', 'targetFolderName', svc);
+    let item1 = new InstallableItem('jdk', ['jdk.msi'], 'targetFolderName', svc);
+    let item2 = new InstallableItem('cygwin', ['cygwin.exe'], 'targetFolderName', svc);
     item2.selectedOption = 'detected';
-    let item3 = new InstallableItem('jbds', 1000, 'url', 'installFile', 'targetFolderName', svc);
+    let item3 = new InstallableItem('jbds', ['jbds.jar'], 'targetFolderName', svc);
     item3.selectedOption = 'detected';
-    let item4 = new InstallableItem('cdk', 1000, 'url', 'installFile', 'targetFolderName', svc);
+    let item4 = new InstallableItem('cdk', ['cdk.zip'], 'targetFolderName', svc);
     svc.addItemsToInstall(item1,item2,item3,item4);
     item1.thenInstall(item2).thenInstall(item3).thenInstall(item4);
     expect(item4.getInstallAfter()).to.be.equal(item1);

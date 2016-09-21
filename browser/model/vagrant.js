@@ -13,20 +13,16 @@ import Util from './helpers/util';
 import Version from './helpers/version';
 
 class VagrantInstall extends InstallableItem {
-  constructor(installerDataSvc, downloadUrl, targetFolderName, sha256) {
+  constructor(installerDataSvc, downloads, targetFolderName) {
     super('vagrant',
-          downloadUrl,
+          downloads,
           targetFolderName,
           installerDataSvc);
 
-    this.downloadedFileName = 'vagrant.msi';
-    this.bundledFile = path.join(this.downloadFolder, this.downloadedFileName);
-    this.downloadedFile = path.join(this.installerDataSvc.tempDir(), this.downloadedFileName);
     this.vagrantPathScript = path.join(this.installerDataSvc.tempDir(), 'set-vagrant-path.ps1');
     this.detected = false;
     this.minimumVersion = "1.8.1";
     this.existingVersion = "";
-    this.sha256 = sha256;
   }
 
   static key() {
@@ -105,18 +101,6 @@ class VagrantInstall extends InstallableItem {
 
   isDownloadRequired() {
     return !this.hasExistingInstall() && !fs.existsSync(this.bundledFile);
-  }
-
-  downloadInstaller(progress, success, failure) {
-    progress.setStatus('Downloading');
-    if(this.isDownloadRequired() && this.selectedOption === "install") {
-      // Need to download the file
-      this.downloader = new Downloader(progress, success, failure);
-      this.downloader.download(this.downloadUrl,this.downloadedFile,this.sha256);
-    } else {
-      this.downloadedFile = this.bundledFile;
-      success();
-    }
   }
 
   install(progress, success, failure) {

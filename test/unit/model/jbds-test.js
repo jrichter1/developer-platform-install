@@ -14,10 +14,12 @@ import InstallableItem from 'model/installable-item';
 import JbdsAutoInstallGenerator from 'model/jbds-autoinstall';
 chai.use(sinonChai);
 
+let reqs = require(path.resolve('./requirements.json'));
+
 describe('devstudio installer', function() {
   let installerDataSvc;
   let infoStub, errorStub, sandbox, installer;
-  let downloadUrl = 'https://devstudio.redhat.com/9.0/snapshots/builds/devstudio.product_9.0.mars/latest/all/jboss-devstudio-9.1.0.latest-installer-standalone.jar';
+  let downloadUrl = reqs['jbds.jar'].dmUrl;
   let fakeData = {
     tempDir: function() { return 'tempDirectory'; },
     installDir: function() { return 'installationFolder'; },
@@ -71,7 +73,7 @@ describe('devstudio installer', function() {
   });
 
   beforeEach(function () {
-    installer = new JbdsInstall(installerDataSvc, downloadUrl, null);
+    installer = new JbdsInstall(installerDataSvc, ['jbds.jar'], 'tempDirectory');
     sandbox = sinon.sandbox.create();
   });
 
@@ -79,19 +81,13 @@ describe('devstudio installer', function() {
     sandbox.restore();
   });
 
-  it('should fail when no url is set', function() {
-    expect(function() {
-      new JbdsInstall(installerDataSvc, null, null);
-    }).to.throw('No download URL set');
-  });
-
   it('should download jbds installer to temporary folder as jbds.jar', function() {
-    expect(new JbdsInstall(installerDataSvc, 'url', null).downloadedFile).to.equal(
+    expect(new JbdsInstall(installerDataSvc, ['jbds.jar'], 'tempDirectory').downloadedFile).to.equal(
       path.join('tempDirectory', 'jbds.jar'));
   });
 
   describe('installer download', function() {
-    let downloadStub,downloadAuthStub;
+    let downloadStub, downloadAuthStub;
 
     beforeEach(function() {
       downloadStub = sandbox.stub(Downloader.prototype, 'download').returns();
@@ -111,7 +107,7 @@ describe('devstudio installer', function() {
       installer.downloadInstaller(fakeProgress, function() {}, function() {});
 
       expect(downloadAuthStub).to.have.been.calledOnce;
-      expect(downloadAuthStub).to.have.been.calledWith(downloadUrl,"user","passwd");
+      expect(downloadAuthStub).to.have.been.calledWith(downloadUrl, "user", "passwd");
     });
 
     it('should skip download when the file is found in the download folder', function() {
@@ -124,14 +120,13 @@ describe('devstudio installer', function() {
   });
 
   describe('installation', function() {
-    let downloadUrl = 'https://devstudio.redhat.com/9.0/snapshots/builds/devstudio.product_9.0.mars/latest/all/jboss-devstudio-9.1.0.latest-installer-standalone.jar';
     let downloadedFile = path.join(installerDataSvc.tempDir(), 'jbds.jar');
     let fsextra = require('fs-extra');
 
     it('should not start until JDK has finished installing', function() {
       let spy = sandbox.spy(fakeProgress, 'setStatus');
       let installSpy = sandbox.spy(installer, 'postInstall');
-      let item2 = new InstallableItem('jdk', 1000, 'url', 'installFile', 'targetFolderName', installerDataSvc);
+      let item2 = new InstallableItem('jdk', ['jdk.msi'], 'targetFolderName', installerDataSvc);
       item2.thenInstall(installer);
       try {
         installer.install(fakeProgress, null, null);
@@ -147,7 +142,7 @@ describe('devstudio installer', function() {
     it('should install once JDK has finished', function() {
       let stub = sandbox.stub(installer, 'postInstall').returns();
       sandbox.stub(fakeInstall, 'isInstalled').returns(true);
-      let item2 = new InstallableItem('jdk', 1000, 'url', 'installFile', 'targetFolderName', installerDataSvc);
+      let item2 = new InstallableItem('jdk', ['jdk.msi'], 'targetFolderName', installerDataSvc);
       item2.setInstallComplete();
       item2.thenInstall(installer);
       installer.install(fakeProgress, () => {}, (err) => {});

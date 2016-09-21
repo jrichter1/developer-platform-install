@@ -12,25 +12,17 @@ import Util from './helpers/util';
 import Version from './helpers/version';
 
 class VirtualBoxInstall extends InstallableItem {
-  constructor(version, revision, installerDataSvc, downloadUrl, targetFolderName, sha256) {
+  constructor(installerDataSvc, downloads, targetFolderName) {
     super('virtualbox',
-          downloadUrl,
+          downloads,
           targetFolderName,
           installerDataSvc);
 
     this.minimumVersion = '5.0.26';
-    this.version = version || '5.0.26';
     this.maximumVersion = '5.1.0';
-    this.revision = revision;
-    this.downloadedFileName = 'virtualbox.exe';
-    this.bundledFile = path.join(this.downloadFolder, this.downloadedFileName);
-    this.downloadedFile = path.join(this.installerDataSvc.tempDir(), this.downloadedFileName);
-
-    this.downloadUrl = this.downloadUrl.split('${version}').join(this.version);
-    this.downloadUrl = this.downloadUrl.split('${revision}').join(this.revision);
+    this.revision = this.files['virtualbox.exe'].revision;
 
     this.msiFile = path.join(this.installerDataSvc.tempDir(), '/VirtualBox-' + this.version + '-r' + this.revision + '-MultiArch_amd64.msi');
-    this.sha256 = sha256;
   }
 
   static key() {
@@ -138,14 +130,11 @@ class VirtualBoxInstall extends InstallableItem {
   }
 
   downloadInstaller(progress, success, failure) {
-    progress.setStatus('Downloading');
-    if(this.isDownloadRequired() && this.selectedOption === "install") {
-      this.downloader = new Downloader(progress, success, failure);
-      this.downloader.download(this.downloadUrl,this.downloadedFile,this.sha256);
-    } else {
-      this.downloadedFile = this.bundledFile;
-      success();
-    }
+      let downloadUrl = this.files['virtualbox.exe'].url;
+      downloadUrl = downloadUrl.split('${version}').join(this.version);
+      this.files['virtualbox.exe'].url = downloadUrl.split('${revision}').join(this.revision);
+
+      super.downloadInstaller(progress, success, failure);
   }
 
   install(progress, success, failure) {

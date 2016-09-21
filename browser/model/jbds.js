@@ -17,16 +17,12 @@ import CDKInstall from './cdk.js';
 import Util from './helpers/util';
 
 class JbdsInstall extends InstallableItem {
-  constructor(installerDataSvc, downloadUrl, targetFolderName, jbdsSha256) {
+  constructor(installerDataSvc, downloads, targetFolderName) {
     super('jbds',
-          downloadUrl,
+          downloads,
           targetFolderName,
           installerDataSvc);
 
-    this.downloadedFileName = 'jbds.jar';
-    this.jbdsSha256 = jbdsSha256;
-    this.bundledFile = path.join(this.downloadFolder, this.downloadedFileName);
-    this.downloadedFile = path.join(this.installerDataSvc.tempDir(), 'jbds.jar');
     this.installConfigFile = path.join(this.installerDataSvc.tempDir(), 'jbds-autoinstall.xml');
     this.addOption('install', this.version, '', true);
   }
@@ -111,20 +107,6 @@ class JbdsInstall extends InstallableItem {
       }
       ipcRenderer.send('checkComplete', JbdsInstall.key());
     });
-  }
-
-  downloadInstaller(progress, success, failure) {
-    let username = this.installerDataSvc.getUsername(),
-        password = this.installerDataSvc.getPassword();
-    progress.setStatus('Downloading');
-    if(!this.hasExistingInstall() && !fs.existsSync(this.bundledFile)) {
-      // Need to download the file
-      this.downloader = new Downloader(progress, success, failure);
-      this.downloader.downloadAuth(this.downloadUrl,username,password,this.downloadedFile,this.jbdsSha256);
-    } else {
-      this.downloadedFile = this.bundledFile;
-      success();
-    }
   }
 
   install(progress, success, failure) {

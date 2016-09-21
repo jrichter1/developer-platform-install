@@ -14,18 +14,11 @@ import Installer from './helpers/installer';
 import Util from './helpers/util.js';
 
 class CDKInstall extends InstallableItem {
-  constructor(installerDataSvc, cdkUrl, cdkBoxUrl, ocUrl, targetFolderName, cdkSha256, boxSha256, ocSha256) {
+  constructor(installerDataSvc, downloads, targetFolderName) {
     super('cdk',
-          cdkUrl,
+          downloads,
           targetFolderName,
           installerDataSvc);
-
-    this.cdkBoxUrl = cdkBoxUrl;
-    this.ocUrl = ocUrl;
-
-    this.cdkSha256 = cdkSha256;
-    this.boxSha256 = boxSha256;
-    this.ocSha256 = ocSha256;
 
     this.cdkFileName = 'cdk.zip';
     this.cdkDownloadedFile = path.join(this.installerDataSvc.tempDir(), this.cdkFileName);
@@ -34,7 +27,11 @@ class CDKInstall extends InstallableItem {
     this.cdkBoxDownloadedFile = path.join(this.installerDataSvc.tempDir(), this.boxName);
 
     this.ocFileName = 'oc.zip';
-    this.ocDownloadedFile = path.join(this.installerDataSvc.tempDir(),   this.ocFileName);
+    this.ocDownloadedFile = path.join(this.installerDataSvc.tempDir(), this.ocFileName);
+
+    this.cdkSha256 = this.files[this.cdkFileName].sha256sum;
+    this.boxSha256 = this.files[this.boxName].sha256sum;
+    this.ocSha256 = this.files[this.ocFileName].sha256sum;
 
     this.pscpPathScript = path.join(this.installerDataSvc.tempDir(), 'set-pscp-path.ps1');
 
@@ -51,34 +48,10 @@ class CDKInstall extends InstallableItem {
   }
 
   downloadInstaller(progress, success, failure) {
-    progress.setStatus('Downloading');
-
-    let totalDownloads = 3;
-
-    this.downloader = new Downloader(progress, success, failure, totalDownloads);
-    let username = this.installerDataSvc.getUsername(),
-        password = this.installerDataSvc.getPassword();
-
-    if(!fs.existsSync(path.join(this.downloadFolder, this.boxName))) {
-      this.downloader.downloadAuth(this.cdkBoxUrl,username,password,this.cdkBoxDownloadedFile,this.boxSha256);
-    } else {
-      this.cdkBoxDownloadedFile = path.join(this.downloadFolder, this.boxName);
-      this.downloader.closeHandler();
-    }
-
-    if(!fs.existsSync(path.join(this.downloadFolder, this.cdkFileName))) {
-      this.downloader.downloadAuth(this.getDownloadUrl(),username,password,this.cdkDownloadedFile, this.cdkSha256);
-    } else {
-      this.cdkDownloadedFile = path.join(this.downloadFolder, this.cdkFileName);
-      this.downloader.closeHandler();
-    }
-
-    if(!fs.existsSync(path.join(this.downloadFolder, this.ocFileName))) {
-      this.downloader.download(this.ocUrl,this.ocDownloadedFile,this.ocSha256);
-    } else {
-      this.ocDownloadedFile = path.join(this.downloadFolder, this.ocFileName);
-      this.downloader.closeHandler();
-    }
+    super.downloadInstaller(progress, success, failure);
+    this.cdkDownloadedFile = this.files[this.cdkFileName].downloadedFile;
+    this.cdkBoxDownloadedFile = this.files[this.boxName].downloadedFile;
+    this.ocDownloadedFile = this.files[this.ocFileName].downloadedFile;
   }
 
   install(progress, success, failure) {

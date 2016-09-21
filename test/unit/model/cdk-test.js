@@ -95,23 +95,17 @@ describe('CDK installer', function() {
 
   let reqs = require(path.resolve('./requirements.json'));
 
-  let cdkUrl = reqs['cdk.zip'].url,
-      cdkBoxUrl = reqs['rhel-vagrant-virtualbox.box'].url,
+  let cdkUrl = reqs['cdk.zip'].dmUrl,
+      cdkBoxUrl = reqs['rhel-vagrant-virtualbox.box'].dmUrl,
       ocUrl = reqs['oc.zip'].url;
 
   beforeEach(function () {
-    installer = new CDKInstall(installerDataSvc, cdkUrl, cdkBoxUrl, ocUrl,  null, null, null);
+    installer = new CDKInstall(installerDataSvc, ['cdk.zip', 'rhel-vagrant-virtualbox.box', 'oc.zip'], 'cdk');
     sandbox = sinon.sandbox.create();
   });
 
   afterEach(function () {
     sandbox.restore();
-  });
-
-  it('should fail when no url is set and installed file is empty', function() {
-    expect(function() {
-      new CDKInstall(installerDataSvc, null, 'ocUrl', 'pscpUrl', '');
-    }).to.throw('No download URL set');
   });
 
   describe('files download', function() {
@@ -132,7 +126,7 @@ describe('CDK installer', function() {
     });
 
     it('should call a correct downloader request for each file', function() {
-      installer = new CDKInstall(installerDataSvc, cdkUrl, cdkBoxUrl, ocUrl,  null);
+      installer = new CDKInstall(installerDataSvc, ['cdk.zip', 'rhel-vagrant-virtualbox.box', 'oc.zip'], 'cdk');
       installer.downloadInstaller(fakeProgress, function() {}, function() {});
 
       //we download 1 out of 4 files with authentication
@@ -161,7 +155,7 @@ describe('CDK installer', function() {
     it('should wait if vagrant has not finished installing', function() {
       let stub = sandbox.stub(installer, 'postVagrantInstall');
       let progressStub = sandbox.stub(fakeProgress, 'setStatus').throws('done');
-      let item2 = new InstallableItem('vagrant', 1000, 'url', 'installFile', 'targetFolderName', installerDataSvc);
+      let item2 = new InstallableItem('vagrant', ['vagrant.msi'], 'targetFolderName', installerDataSvc);
       item2.thenInstall(installer);
       try {
         installer.install(fakeProgress, () => {}, (err) => {});
@@ -176,7 +170,7 @@ describe('CDK installer', function() {
     it('should install once vagrant has finished', function() {
       let stub = sandbox.stub(installer, 'postVagrantInstall').returns();
       sandbox.stub(vagrantInstallStub, 'isInstalled').returns(true);
-      let item2 = new InstallableItem('cygwin', 1000, 'url', 'installFile', 'targetFolderName', installerDataSvc);
+      let item2 = new InstallableItem('cygwin', ['cygwin.exe'], 'targetFolderName', installerDataSvc);
       item2.setInstallComplete();
       item2.thenInstall(installer);
       installer.install(fakeProgress, () => {}, (err) => {});

@@ -27,9 +27,8 @@ describe('InstallerDataService', function() {
       go: function(route) {}
     };
     sandbox = sinon.sandbox.create();
-    vagrant = new VagrantInstall(svc, 'https://github.com/redhat-developer-tooling/vagrant-distribution/archive/1.7.4.zip', null);
-    vbox = new VirtualBoxInstall('5.0.8', '103449', svc,
-      'http://download.virtualbox.org/virtualbox/${version}/VirtualBox-${version}-${revision}-Win.exe', null);
+    vagrant = new VagrantInstall(svc, ['vagrant.msi'], 'vagrant');
+    vbox = new VirtualBoxInstall(svc, ['virtualbox.exe'], 'virtualbox');
   });
 
   afterEach(function() {

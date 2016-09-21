@@ -2,19 +2,24 @@
 
 import Util from './helpers/util';
 import path from 'path';
+import Downloader from './helpers/downloader';
+import fs from 'fs-extra';
 
 let reqs = Util.resolveFile('.', 'requirements.json');
 
 class InstallableItem {
-  constructor(keyName, downloadUrl, targetFolderName, installerDataSvc) {
+  constructor(keyName, downloads, targetFolderName, installerDataSvc) {
     this.keyName = keyName;
+    this.files = {};
 
     let requirement;
     for (let key in reqs) {
       let regex = new RegExp('^' + keyName + '\\.\\w+');
       if (regex.test(key)) {
         requirement = reqs[key];
-        break;
+      }
+      if (downloads.indexOf(key) > -1) {
+        this.files[key] = reqs[key];
       }
     }
 
@@ -36,20 +41,21 @@ class InstallableItem {
     this.detectedVersion = 'unknown';
     this.detectedInstallLocation = '';
 
-    if (downloadUrl == null || downloadUrl == '') {
-    	throw(new Error('No download URL set'));
-    }
-
-    this.downloadUrl = downloadUrl;
-
     this.isCollapsed = true;
     this.option = new Set();
     this.selectedOption = "install";
 
     this.downloader = null;
-    this.downloadFolder = path.normalize(path.join(__dirname,"../../../.."));
+    this.downloadFolder = path.normalize(path.join(__dirname, "../../../.."));
 
     this.installAfter = undefined;
+
+    if (downloads.length === 1) {
+      let key = downloads[0];
+      this.checksum = this.files[key].sha256sum;
+      this.downloadedFile = path.join(this.installerDataSvc.tempDir(), key);
+      this.bundledFile = path.join(this.downloadFolder, key);
+    }
   }
 
   getProductName() {
@@ -104,8 +110,36 @@ class InstallableItem {
   }
 
   downloadInstaller(progress, success, failure) {
-    // To be overridden
-    success();
+    progress.setStatus('Downloading');
+
+    let downloader = new Downloader(progress, success, failure, Object.keys(this.files).length);
+    let username = this.installerDataSvc.getUsername(),
+        password = this.installerDataSvc.getPassword();
+
+    for (let key in this.files) {
+      let downloadedFile = path.join(this.installerDataSvc.tempDir(), key);
+      let url, auth;
+
+      if (this.files[key].dmUrl) {
+        url = this.files[key].dmUrl;
+        auth = true;
+      } else {
+        url = this.files[key].url;
+        auth = false;
+      }
+
+      if(!fs.existsSync(path.join(downloadedFile))) {
+        if (auth) {
+          downloader.downloadAuth(url, username, password, downloadedFile, this.files[key].sha256sum);
+        } else {
+          downloader.download(url, downloadedFile, this.files[key].sha256sum);
+        }
+      } else {
+        this.downloadedFile = path.join(this.downloadFolder, key);
+        downloader.closeHandler();
+      }
+      this.files[key].downloadedFile = downloadedFile;
+    }
   }
 
   install(progress, success, failure) {

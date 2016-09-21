@@ -14,18 +14,14 @@ import Util from './helpers/util';
 
 
 class CygwinInstall extends InstallableItem {
-  constructor(installerDataSvc, downloadUrl, targetFolderName, sha256) {
+  constructor(installerDataSvc, downloads, targetFolderName) {
     super('cygwin',
-          downloadUrl,
+          downloads,
           targetFolderName,
           installerDataSvc);
 
-    this.downloadedFileName = 'cygwin.exe';
-    this.bundledFile = path.join(this.downloadFolder, this.downloadedFileName);
-    this.downloadedFile = path.join(this.installerDataSvc.tempDir(), this.downloadedFileName);
     this.cygwinPathScript = path.join(this.installerDataSvc.tempDir(), 'set-cygwin-path.ps1');
     this.addOption('install',this.version,'',true);
-    this.checksum = sha256;
   }
 
   isSkipped() {
@@ -54,19 +50,6 @@ class CygwinInstall extends InstallableItem {
         this.addOption('different','','',false);
         cb(error);
       });
-  }
-
-  downloadInstaller(progress, success, failure) {
-    progress.setStatus('Downloading');
-
-    if(!fs.existsSync(this.bundledFile)) {
-      // Need to download the file
-      this.downloader = new Downloader(progress, success, failure);
-      this.downloader.download(this.downloadUrl,this.downloadedFile,this.checksum);
-    } else {
-      this.downloadedFile = this.bundledFile;
-      success();
-    }
   }
 
   install(progress, success, failure) {

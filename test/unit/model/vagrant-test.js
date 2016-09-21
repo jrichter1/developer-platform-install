@@ -16,9 +16,11 @@ import Util from 'model/helpers/util';
 import child_process from 'child_process';
 chai.use(sinonChai);
 
+let reqs = require(path.resolve('./requirements.json'));
+
 describe('Vagrant installer', function() {
   let installer;
-  let downloadUrl = 'https://github.com/redhat-developer-tooling/vagrant-distribution/archive/1.7.4.zip';
+  let downloadUrl = reqs['vagrant.msi'].url;
   let installerDataSvc;
   let infoStub, errorStub, sandbox;
   let fakeInstallable = {
@@ -28,7 +30,9 @@ describe('Vagrant installer', function() {
     tempDir: function() { return 'tempDirectory'; },
     installDir: function() { return 'installationFolder'; },
     vagrantDir: function() { return path.join('installationFolder','vagrant'); },
-    getInstallable: function(key) { return fakeInstallable; }
+    getInstallable: function(key) { return fakeInstallable; },
+    getUsername: function() {},
+    getPassword: function() {}
   };
 
   installerDataSvc = sinon.stub(fakeData);
@@ -36,6 +40,8 @@ describe('Vagrant installer', function() {
   installerDataSvc.installDir.returns('installationFolder');
   installerDataSvc.vagrantDir.returns(path.join('installationFolder','vagrant'));
   installerDataSvc.getInstallable.returns(fakeInstallable);
+  installerDataSvc.getUsername.returns('user');
+  installerDataSvc.getPassword.returns('passwd');
 
   let fakeProgress = {
     setStatus: function (desc) { return; },
@@ -65,7 +71,7 @@ describe('Vagrant installer', function() {
   });
 
   beforeEach(function () {
-    installer = new VagrantInstall(installerDataSvc, downloadUrl, null);
+    installer = new VagrantInstall(installerDataSvc, ['vagrant.msi'], 'installationFolder');
     sandbox = sinon.sandbox.create();
   });
 
@@ -73,14 +79,8 @@ describe('Vagrant installer', function() {
     sandbox.restore();
   });
 
-  it('should fail when no url is set', function() {
-    expect(function() {
-      new VagrantInstall(installerDataSvc, null, null);
-    }).to.throw('No download URL set');
-  });
-
   it('should download vagrant installer to temporary folder as vagrant.zip', function() {
-    expect(new VagrantInstall(installerDataSvc, 'url', null).downloadedFile).to.equal(
+    expect(new VagrantInstall(installerDataSvc, ['vagrant.msi'], 'installationFolder').downloadedFile).to.equal(
       path.join(installerDataSvc.tempDir(), 'vagrant.msi'));
   });
 
@@ -122,7 +122,7 @@ describe('Vagrant installer', function() {
     it('should not start until Cygwin has finished installing', function() {
       let spy = sandbox.spy(fakeProgress, 'setStatus');
       let installSpy = sandbox.spy(installer, 'postCygwinInstall');
-      let item2 = new InstallableItem('cygwin', 1000, 'url', 'installFile', 'targetFolderName', installerDataSvc);
+      let item2 = new InstallableItem('cygwin', ['cygwin.exe'], 'targetFolderName', installerDataSvc);
       item2.thenInstall(installer);
       try {
         installer.install(fakeProgress, null, null);
@@ -138,7 +138,7 @@ describe('Vagrant installer', function() {
     it('should install once Cygwin has finished', function() {
       let stub = sandbox.stub(installer, 'postCygwinInstall').returns();
       sandbox.stub(fakeInstallable, 'isInstalled').returns(true);
-      let item2 = new InstallableItem('cygwin', 1000, 'url', 'installFile', 'targetFolderName', installerDataSvc);
+      let item2 = new InstallableItem('cygwin', ['cygwin.exe'], 'targetFolderName', installerDataSvc);
       item2.setInstallComplete();
       item2.thenInstall(installer);
 

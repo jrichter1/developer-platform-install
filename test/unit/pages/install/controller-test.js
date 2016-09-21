@@ -38,10 +38,8 @@ describe('Install controller', function() {
     sandbox.stub(InstallerDataService.prototype,'copyUninstaller').returns();
     installerDataSvc = new InstallerDataService();
     installerDataSvc.setup('installRoot');
-    vagrant = new VagrantInstall(installerDataSvc,
-      'https://github.com/redhat-developer-tooling/vagrant-distribution/archive/1.7.4.zip', null);
-    vbox = new VirtualBoxInstall('5.0.8', '103449', installerDataSvc,
-      'http://download.virtualbox.org/virtualbox/${version}/VirtualBox-${version}-${revision}-Win.exe', null);
+    vagrant = new VagrantInstall(installerDataSvc, ['vagrant.msi'], null);
+    vbox = new VirtualBoxInstall(installerDataSvc, ['virtualbox.exe'], null);
 
     installerDataSvc.addItemToInstall(VagrantInstall.key(), vagrant);
     installerDataSvc.addItemToInstall(VirtualBoxInstall.key(), vbox);

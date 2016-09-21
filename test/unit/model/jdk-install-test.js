@@ -5,7 +5,8 @@ import sinon from 'sinon';
 import { default as sinonChai } from 'sinon-chai';
 import mockfs from 'mock-fs';
 import request from 'request';
-import fs from 'fs';
+import ffs from 'fs';
+import fs from 'fs-extra';
 import path from 'path';
 import JdkInstall from 'model/jdk-install';
 import Logger from 'services/logger';
@@ -15,10 +16,12 @@ import InstallableItem from 'model/installable-item';
 import rimraf from 'rimraf';
 chai.use(sinonChai);
 
+let reqs = require(path.resolve('./requirements.json'));
+
 describe('JDK installer', function() {
   let installerDataSvc, sandbox, installer;
   let infoStub, errorStub;
-  let downloadUrl = 'http://www.azulsystems.com/products/zulu/downloads';
+  let downloadUrl = reqs['jdk.msi'].dmUrl;
   let fakeInstallable = {
     isInstalled: function() { return true; }
   };
@@ -72,21 +75,15 @@ describe('JDK installer', function() {
 
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
-    installer = new JdkInstall(installerDataSvc, downloadUrl, null);
+    installer = new JdkInstall(installerDataSvc, ['jdk.msi'], 'tempDirectory');
   });
 
   afterEach(function () {
     sandbox.restore();
   });
 
-  it('should fail when no url is set', function() {
-    expect(function() {
-      new JdkInstall(installerDataSvc, null, null);
-    }).to.throw('No download URL set');
-  });
-
   it('should download jdk installer to temporary folder as jdk8.msi', function() {
-    expect(new JdkInstall(installerDataSvc, 'url', null).downloadedFile).to.equal(
+    expect(new JdkInstall(installerDataSvc, ['jdk.msi'], 'tempDirectory').downloadedFile).to.equal(
       path.join('tempDirectory', 'jdk.msi'));
   });
 
@@ -107,6 +104,7 @@ describe('JDK installer', function() {
     });
 
     it('should call downloader#download with the specified parameters once', function() {
+      sandbox.stub(fs, 'existsSync').returns(false);
       installer.downloadInstaller(fakeProgress, function() {}, function() {});
 
       expect(downloadStub).to.have.been.calledOnce;
@@ -135,7 +133,7 @@ describe('JDK installer', function() {
     });
 
     it('should remove an existing folder with the same name', function() {
-      sandbox.stub(fs, 'existsSync').returns(true);
+      sandbox.stub(ffs, 'existsSync').returns(true);
       let stub = sandbox.stub(rimraf, 'sync').returns();
 
       installer.install(fakeProgress, function() {}, function (err) {})
@@ -187,7 +185,7 @@ describe('JDK installer', function() {
       let err = new Error('critical error');
 
       it('getFolderContents should list files in a folder', function() {
-        let spy = sandbox.spy(fs, 'readdir');
+        let spy = sandbox.spy(ffs, 'readdir');
 
         return installer.getFolderContents('tempDirectory')
         .then((files) => {
@@ -198,7 +196,7 @@ describe('JDK installer', function() {
       });
 
       it('getFolderContents should reject on error', function() {
-        let stub = sandbox.stub(fs, 'readdir').yields(err);
+        let stub = sandbox.stub(ffs, 'readdir').yields(err);
 
         return installer.getFolderContents('tempDirectory')
         .then((files) => {
@@ -219,7 +217,7 @@ describe('JDK installer', function() {
       });
 
       it('renameFile should rename a file with given path', function() {
-        let spy = sandbox.spy(fs, 'rename');
+        let spy = sandbox.spy(ffs, 'rename');
 
         return installer.renameFile('tempDirectory', 'test', 'newName')
         .then((result) => {
@@ -230,7 +228,7 @@ describe('JDK installer', function() {
       });
 
       it('renameFile should reject on error', function() {
-        sandbox.stub(fs, 'rename').yields(err);
+        sandbox.stub(ffs, 'rename').yields(err);
 
         return installer.renameFile('tempDirectory', 'test', 'newName')
         .then((result) => {
