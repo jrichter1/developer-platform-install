@@ -52,6 +52,7 @@ class InstallableItem {
     this.installAfter = undefined;
     this.ipcRenderer = ipcRenderer;
     this.authRequired = authRequired;
+    this.requiredComponents = new Set();
   }
 
   getProductName() {
@@ -159,6 +160,13 @@ class InstallableItem {
   }
 
   install(progress, success, failure) {
+    for (let item of this.requiredComponents) {
+      if (!this.installerDataSvc.isQueuedToInstall(item)) {
+        this.installerDataSvc.cancelInstall(key, progress, item);
+        return;
+      }
+    }
+
     if( !this.getInstallAfter() || this.getInstallAfter().isInstalled() ) {
       this.installAfterRequirements(progress, success, failure);
     } else {
@@ -167,6 +175,16 @@ class InstallableItem {
       this.ipcRenderer.on('installComplete', (event, arg) => {
         if (!this.isInstalled() && arg === this.getInstallAfter().keyName) {
           this.installAfterRequirements(progress, success, failure);
+        }
+      });
+      this.ipcRenderer.on('installCancelled', (event, arg) => {
+        if (!this.isInstalled() && arg === this.getInstallAfter().keyName) {
+          if (this.requiredComponents.has(arg)) {
+            this.installerDataSvc.cancelInstall(this.keyName, progress, arg);
+          }
+          if (!this.requiredComponents.has(arg)) {
+            this.installAfterRequirements(progress, success, failure);
+          }
         }
       });
     }
@@ -240,8 +258,11 @@ class InstallableItem {
     return installable;
   }
 
-  thenInstall(installer) {
+  thenInstall(installer, required) {
     installer.installAfter = this;
+    if (required) {
+      installer.requiredComponents.add(this.keyName);
+    }
     return installer;
   }
 

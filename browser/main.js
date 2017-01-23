@@ -133,7 +133,7 @@ let mainModule =
 
             installerDataSvc.addItemsToInstall(virtualbox, cygwin, cdk, jdk, jbds);
 
-            jdk.thenInstall(jbds);
+            jdk.thenInstall(jbds, true);
             jdk.thenInstall(virtualbox).thenInstall(cygwin).thenInstall(cdk);
 
           }]);

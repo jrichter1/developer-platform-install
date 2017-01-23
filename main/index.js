@@ -12,6 +12,10 @@ ipcMain.on('crash', function(event, arg) {
 
 // Rebroadcasts installComplete event from Renderer back to Renderer.
 // Bit of a hack, but it enables async messaging in UI.
+ipcMain.on('installCancelled', (event, arg) => {
+  event.sender.send('installCancelled', arg);
+});
+
 ipcMain.on('installComplete', (event, arg) => {
   event.sender.send('installComplete', arg);
 });

@@ -15,7 +15,7 @@
   </div>
 </main>
 
-<div class="greyed-out-background" ng-show="instCtrl.failedDownloads.size > 0"></div>
+<div class="greyed-out-background" ng-show="instCtrl.failedDownloads.size > 0 || instCtrl.failedInstalls.size > 0"></div>
 <div class="close-modal" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" ng-show="instCtrl.failedDownloads.size > 0">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -34,6 +34,42 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" ng-click="instCtrl.downloadAgain()">Download Again</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="close-modal" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" ng-show="instCtrl.getFailedInstalls().length > 0">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+          <span class="pficon pficon-close" ng-click="instCtrl.closeDownloadAgainDialog()"></span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">&nbsp;</h4>
+      </div>
+      <div class="modal-body">
+        <span id="tcIcon" class="pficon pficon-error-circle-o"></span>
+        <strong id="tcMessage" class="error">Component(s) failed to install.</strong>
+
+        <div class="list-group">
+          <ul>
+            <li ng-repeat="(key, value) in failures" class="list-group-item">
+              <strong>{{data[key].productName}}</strong> reports the following error:
+              <ul class="list-group-item">
+               <li>{{value.error}}</li>
+              </ul>
+              The following components are set to wait for {{data[key].productName}} to successfully complete (directly or transitively):
+              <ul class="list-group-item">
+                <li ng-repeat="component in value.queue"><strong>{{data[component].productName}}<strong></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" ng-click="instCtrl.cancelFailedInstalls()">Cancel Item</button>
+        <button type="button" class="btn btn-primary" ng-click="instCtrl.exit()">Exit Installer</button>
       </div>
     </div>
   </div>

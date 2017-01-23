@@ -3,11 +3,14 @@
 import Logger from '../../services/logger';
 
 class InstallController {
-  constructor($scope, $timeout, installerDataSvc) {
+  constructor($scope, $timeout, installerDataSvc, electron) {
     this.$scope = $scope;
     this.$timeout = $timeout;
     this.installerDataSvc = installerDataSvc;
     this.failedDownloads = new Set();
+    this.failedInstalls = this.installerDataSvc.failedInstalls;
+    this.$scope.failures = this.failedInstalls;
+    this.electron = electron;
 
     this.data = {};
     for (var [key, value] of this.installerDataSvc.allInstallables().entries()) {
@@ -20,6 +23,10 @@ class InstallController {
       }
     }
     this.$scope.data = this.data;
+  }
+
+  getFailedInstalls() {
+    return Object.keys(this.failedInstalls);
   }
 
   processInstallable(key, value, itemProgress) {
@@ -53,6 +60,19 @@ class InstallController {
     });
   }
 
+  cancelFailedInstalls() {
+    for (var key in this.failedInstalls) {
+      let progress = this.data[key];
+      this.installerDataSvc.cancelInstall(key, progress);
+    }
+  }
+
+  exit() {
+    Logger.info('Closing the installer window');
+    this.electron.remote.getCurrentWindow().removeAllListeners('close');
+    this.electron.remote.getCurrentWindow().close();
+  }
+
   closeDownloadAgainDialog() {
     this.failedDownloads.clear();
   }
@@ -66,8 +86,7 @@ class InstallController {
       },
       (error) => {
         Logger.error(installableKey + ' failed to install: ' + error);
-      }
-    );
+      });
   }
 
   productName(key) {
@@ -157,7 +176,7 @@ class ProgressState {
   }
 }
 
-InstallController.$inject = ['$scope', '$timeout', 'installerDataSvc'];
+InstallController.$inject = ['$scope', '$timeout', 'installerDataSvc', 'electron'];
 
 export default InstallController;
 export { ProgressState };

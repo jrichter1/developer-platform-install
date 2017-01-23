@@ -32,6 +32,7 @@ class InstallerDataService {
     this.downloading = false;
     this.installing = false;
     this.requirements = requirements;
+    this.failedInstalls = {};
   }
 
   setup(vboxRoot, jdkRoot, jbdsRoot, cygwinRoot, cdkRoot) {
@@ -156,6 +157,10 @@ class InstallerDataService {
     return this.installing;
   }
 
+  isQueuedToInstall(key) {
+    return this.toInstall.has(key);
+  }
+
   startDownload(key) {
     Logger.info('Download started for: ' + key);
 
@@ -185,6 +190,35 @@ class InstallerDataService {
       },
       (error) => {
         Logger.error(key + ' failed to install: ' + error);
+        this.failedInstalls[key] = {};
+        this.failedInstalls[key].error = error;
+        this.failedInstalls[key].queue = [];
+        let entries = new Map(this.installableItems);
+
+        let currentEntry = key;
+        let currentQueue = [];
+
+        while (entries.size > 0) {
+          for (var [ckey, value] of entries.entries()) {
+            if (value.getInstallAfter() === this.installableItems.get(currentEntry)) {
+              if (this.failedInstalls[key].queue.indexOf(ckey) < 0) {
+                this.failedInstalls[key].queue.push(ckey);
+                currentQueue.push(ckey);
+              }
+            }
+          }
+          entries.delete(currentEntry);
+          if (currentQueue.length > 0) {
+            currentEntry = currentQueue[0];
+            currentQueue.shift();
+          }
+        }
+        for (var item of this.failedInstalls[key].queue) {
+          if(this.getInstallable(item).isSkipped()) {
+            let i = this.failedInstalls[key].queue.indexOf(item);
+            this.failedInstalls[key].queue.splice(i, 1);
+          }
+        }
       }
     );
   }
@@ -222,6 +256,23 @@ class InstallerDataService {
     this.toInstall.delete(key);
     item.setInstallComplete();
 
+    this.installsComplete();
+  }
+
+  cancelInstall(key, progress, failedRequirement) {
+    let cause = failedRequirement ? ('ed requirement - ' + failedRequirement) : 'ure';
+    Logger.info(key + ': Cancelling installation due to fail' + cause);
+
+    delete this.failedInstalls[key];
+    this.toInstall.delete(key);
+    progress.setStatus('Cancelled');
+    this.ipcRenderer.send('installCancelled', key);
+
+    this.installsComplete();
+  }
+
+
+  installsComplete() {
     if (!this.isDownloading() && this.toInstall.size == 0) {
       Logger.info('All installs complete');
       this.installing = false;
