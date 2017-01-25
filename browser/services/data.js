@@ -189,46 +189,68 @@ class InstallerDataService {
         this.installDone(progress, key);
       },
       (error) => {
-        Logger.error(key + ' failed to install: ' + error);
-        this.failedInstalls[key] = {};
-        this.failedInstalls[key].error = error;
-        this.failedInstalls[key].queue = [];
-        this.failedInstalls[key].blocked = [];
-        let entries = new Map(this.installableItems);
+        this.handleInstallError(key, error);
+      });
+  }
 
-        let currentEntry = key;
-        let currentQueue = [];
+  handleInstallError(key, error) {
+    Logger.error(key + ' failed to install: ' + error);
+    this.failedInstalls[key] = {};
+    this.failedInstalls[key].error = error;
+    this.failedInstalls[key].queue = [];
+    this.failedInstalls[key].blocked = [];
+    let entries = new Map(this.installableItems);
 
-        while (entries.size > 0) {
-          for (var [ckey, value] of entries.entries()) {
-            if (value.getInstallAfter() === this.installableItems.get(currentEntry)) {
-              if (this.failedInstalls[key].queue.indexOf(ckey) < 0) {
-                this.failedInstalls[key].queue.push(ckey);
-                currentQueue.push(ckey);
-              }
-            }
-          }
-          entries.delete(currentEntry);
-          if (currentQueue.length > 0) {
-            currentEntry = currentQueue[0];
-            currentQueue.shift();
-          } else {
-            break;
-          }
-        }
-        for (var item of this.failedInstalls[key].queue) {
-          let installable = this.getInstallable(item);
-          if(installable.isSkipped()) {
-            let i = this.failedInstalls[key].queue.indexOf(item);
-            this.failedInstalls[key].queue.splice(i, 1);
-          } else if (installable.getInstallAfter() === this.getInstallable(key) && installable.requiredComponents.has(key)) {
-            this.failedInstalls[key].blocked.push(item);
-            let i = this.failedInstalls[key].queue.indexOf(item);
-            this.failedInstalls[key].queue.splice(i, 1);
+    let currentEntry = key;
+    let currentQueue = [];
+
+    // Find all transitive dependencies on the failed component
+    while (entries.size > 0) {
+      for (var [ckey, value] of entries.entries()) {
+        if (value.getInstallAfter() === this.installableItems.get(currentEntry)) {
+          if (this.failedInstalls[key].queue.indexOf(ckey) < 0) {
+            this.failedInstalls[key].queue.push(ckey);
+            currentQueue.push(ckey);
           }
         }
       }
-    );
+      entries.delete(currentEntry);
+      if (currentQueue.length > 0) {
+        currentEntry = currentQueue[0];
+        currentQueue.shift();
+      } else {
+        break;
+      }
+    }
+    // Disregard skipped components, mark components blocked by the failure
+    for (var item of this.failedInstalls[key].queue) {
+      let installable = this.getInstallable(item);
+      if(installable.isSkipped()) {
+        let i = this.failedInstalls[key].queue.indexOf(item);
+        this.failedInstalls[key].queue.splice(i, 1);
+      } else if (installable.getInstallAfter() === this.getInstallable(key) && installable.requiredComponents.has(key)) {
+        this.failedInstalls[key].blocked.push(item);
+        let i = this.failedInstalls[key].queue.indexOf(item);
+        this.failedInstalls[key].queue.splice(i, 1);
+      }
+    }
+  }
+
+  retryInstall(key, progress) {
+    Logger.info('Retrying install for: ' + key);
+    delete this.failedInstalls[key];
+    if (!this.isInstalling()) {
+      this.installing = true;
+    }
+
+    let item = this.getInstallable(key);
+    return item.installAfterRequirements(progress,
+      () => {
+        this.installDone(progress, key);
+      },
+      (error) => {
+        this.handleInstallError(key, error);
+      });
   }
 
   startInstall(key) {

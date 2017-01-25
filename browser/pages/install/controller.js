@@ -11,6 +11,7 @@ class InstallController {
     this.failedInstalls = this.installerDataSvc.failedInstalls;
     this.$scope.failures = this.failedInstalls;
     this.electron = electron;
+    this.action = 'cancel';
 
     this.data = {};
     for (var [key, value] of this.installerDataSvc.allInstallables().entries()) {
@@ -60,10 +61,31 @@ class InstallController {
     });
   }
 
+  processErrors() {
+    switch (this.action) {
+      case 'cancel':
+        this.cancelFailedInstalls();
+        break;
+      case 'retry':
+        this.retryFailedInstalls();
+        break;
+      case 'exit':
+        this.exit();
+        break;
+    }
+  }
+
   cancelFailedInstalls() {
     for (var key in this.failedInstalls) {
       let progress = this.data[key];
       this.installerDataSvc.cancelInstall(key, progress);
+    }
+  }
+
+  retryFailedInstalls() {
+    for (var key in this.failedInstalls) {
+      let progress = this.data[key];
+      this.installerDataSvc.retryInstall(key, progress);
     }
   }
 

@@ -164,7 +164,7 @@ class InstallableItem {
       if (!this.installerDataSvc.isQueuedToInstall(item) &&
         !this.installerDataSvc.getInstallable(item).isInstalled() &&
         !this.installerDataSvc.getInstallable(item).isSkipped()) {
-        
+
         this.installerDataSvc.cancelInstall(this.keyName, progress, item);
         return;
       }

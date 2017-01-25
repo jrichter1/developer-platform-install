@@ -39,7 +39,7 @@
   </div>
 </div>
 
-<div class="close-modal" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" ng-show="instCtrl.getFailedInstalls().length > 0">
+<div class="close-modal" id="errorModal" style="top: -30px;" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" ng-show="instCtrl.getFailedInstalls().length > 0">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -53,11 +53,11 @@
         <strong id="tcMessage" class="error">Component(s) failed to install.</strong>
 
         <div class="list-group">
-          <ul>
-            <li ng-repeat="(key, value) in failures" class="list-group-item">
+            <div ng-repeat="(key, value) in failures" class="list-group-item">
               <strong>{{data[key].productName}}</strong> reports the following error:
               <ul class="list-group-item">
-               <li>{{value.error}}</li>
+               <li><strong>{{value.error}}</strong></li>
+               You can find more detailed information in the log files located in the target directory.
               </ul>
               <div ng-show="value.blocked.length > 0">
                 The following components require {{data[key].productName}} to be installed in order to proceed:
@@ -72,13 +72,31 @@
                   <li ng-repeat="component in value.queue">{{data[component].productName}}</li>
                 </ul>
               </div>
-            </li>
-          </ul>
+            </div>
+        </div>
+
+        <div>
+          Please choose how you would like to proceed:
+          <form name="errorForm" id="errorForm" class="form-horizontal" ng-submit="instCtrl.processErrors()">
+            <label>
+              <input type="radio" ng-model="instCtrl.action" value="cancel">
+              Cancel the failed components and install what can be installed.
+            </label><br/>
+            <label>
+              <input type="radio" ng-model="instCtrl.action" value="retry">
+              Try to install the failed components again (might lead to the same error).
+            </label><br/>
+            <label>
+              <input type="radio" ng-model="instCtrl.action" value="exit">
+              Exit the installer.
+            </label><br/>
+          </form>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" ng-click="instCtrl.cancelFailedInstalls()">Cancel Item</button>
-        <button type="button" class="btn btn-primary" ng-click="instCtrl.exit()">Exit Installer</button>
+        <!-- <button type="button" class="btn btn-primary" ng-click="instCtrl.cancelFailedInstalls()">Cancel Item</button>
+        <button type="button" class="btn btn-primary" ng-click="instCtrl.exit()">Exit Installer</button> -->
+        <button type="submit" id="error-action-btn" class="go-btn footer-btns btn btn-primary btn-lg" form="errorForm">Confirm</button>
       </div>
     </div>
   </div>
