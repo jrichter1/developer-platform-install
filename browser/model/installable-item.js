@@ -161,8 +161,11 @@ class InstallableItem {
 
   install(progress, success, failure) {
     for (let item of this.requiredComponents) {
-      if (!this.installerDataSvc.isQueuedToInstall(item)) {
-        this.installerDataSvc.cancelInstall(key, progress, item);
+      if (!this.installerDataSvc.isQueuedToInstall(item) &&
+        !this.installerDataSvc.getInstallable(item).isInstalled() &&
+        !this.installerDataSvc.getInstallable(item).isSkipped()) {
+        
+        this.installerDataSvc.cancelInstall(this.keyName, progress, item);
         return;
       }
     }

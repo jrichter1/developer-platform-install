@@ -59,10 +59,19 @@
               <ul class="list-group-item">
                <li>{{value.error}}</li>
               </ul>
-              The following components are set to wait for {{data[key].productName}} to successfully complete (directly or transitively):
-              <ul class="list-group-item">
-                <li ng-repeat="component in value.queue"><strong>{{data[component].productName}}<strong></li>
-              </ul>
+              <div ng-show="value.blocked.length > 0">
+                The following components require {{data[key].productName}} to be installed in order to proceed:
+                <ul class="list-group-item">
+                  <li ng-repeat="component in value.blocked"><strong>{{data[component].productName}}</strong></li>
+                </ul>
+              </div>
+
+              <div ng-show="value.queue.length > 0">
+                The following components are queued to install after {{data[key].productName}} has finished, but their installation does not require it:
+                <ul class="list-group-item">
+                  <li ng-repeat="component in value.queue">{{data[component].productName}}</li>
+                </ul>
+              </div>
             </li>
           </ul>
         </div>

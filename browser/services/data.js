@@ -193,6 +193,7 @@ class InstallerDataService {
         this.failedInstalls[key] = {};
         this.failedInstalls[key].error = error;
         this.failedInstalls[key].queue = [];
+        this.failedInstalls[key].blocked = [];
         let entries = new Map(this.installableItems);
 
         let currentEntry = key;
@@ -211,10 +212,17 @@ class InstallerDataService {
           if (currentQueue.length > 0) {
             currentEntry = currentQueue[0];
             currentQueue.shift();
+          } else {
+            break;
           }
         }
         for (var item of this.failedInstalls[key].queue) {
-          if(this.getInstallable(item).isSkipped()) {
+          let installable = this.getInstallable(item);
+          if(installable.isSkipped()) {
+            let i = this.failedInstalls[key].queue.indexOf(item);
+            this.failedInstalls[key].queue.splice(i, 1);
+          } else if (installable.getInstallAfter() === this.getInstallable(key) && installable.requiredComponents.has(key)) {
+            this.failedInstalls[key].blocked.push(item);
             let i = this.failedInstalls[key].queue.indexOf(item);
             this.failedInstalls[key].queue.splice(i, 1);
           }

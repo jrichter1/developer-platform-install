@@ -4,12 +4,20 @@
 </header>
 
 <main class="">
-  <div class="middle-high-pos text-center">
-    <div class="text-padding">Everything's installed and you're good to go!</div>
-    <div class="text-padding">What’s next? <a id="quickstart-link" href="" ng-click="startCtrl.learnCDK()">Learn how to create your first CDK project.</a></div>
+  <div class="middle-high-pos">
+    <table class="table table-striped table-bordered" style="width: 60%; margin: auto;">
+      <tr><th>Product</th><th>Version</th><th>Result</th></tr>
+      <tr ng-repeat="item in installables" ng-class="{'success': item.status == 'Installed', 'info': item.status == 'Skipped', 'danger': item.status == 'Failed'}">
+        <td>{{item.productName}}</td><td>{{item.productVersion}}</td><td>{{item.status}}</td>
+      </tr>
+    </table>
+    <div class="text-center">
+      <div class="text-padding">Everything's installed and you're good to go!</div>
+      <div class="text-padding">What’s next? <a id="quickstart-link" href="" ng-click="startCtrl.learnCDK()">Learn how to create your first CDK project.</a></div>
+    </div>
   </div>
   <form id="startForm" role="form" class="text-center" ng-submit="startCtrl.start()">
-    <div ng-hide="startCtrl.jbdsInstall.isSkipped()">
+    <div ng-hide="startCtrl.jbdsInstall.isSkipped() || !startCtrl.jbdsInstall.isInstalled()">
       <button type="submit" id="start-submit" class="btn btn-primary">Open Red Hat JBoss Developer Studio</button>
     </div>
     <div>

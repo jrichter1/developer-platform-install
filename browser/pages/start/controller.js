@@ -9,12 +9,30 @@ import Platform from '../../services/platform';
 
 class StartController {
 
-  constructor(installerDataSvc, electron) {
+  constructor(installerDataSvc, electron, $scope) {
     this.installerDataSvc = installerDataSvc;
     this.electron = electron;
     this.jbdsInstall = this.installerDataSvc.getInstallable('jbds');
     this.electron.remote.getCurrentWindow().removeAllListeners('close');
     this.launchDevstudio = this['launchDevstudio_' + Platform.OS];
+    this.$scope = $scope;
+
+    this.installables = {};
+    for (var [key, value] of this.installerDataSvc.allInstallables().entries()) {
+      this.installables[key] = {};
+      this.installables[key].productName = value.getProductName();
+      this.installables[key].productVersion = value.getProductVersion();
+
+      if (value.isSkipped()) {
+        this.installables[key].status = 'Skipped';
+      } else if (value.isInstalled()) {
+        this.installables[key].status = 'Installed';
+      } else {
+        this.installables[key].status = 'Failed';
+      }
+    }
+
+    this.$scope.installables = this.installables;
   }
 
   learnCDK() {
@@ -26,7 +44,7 @@ class StartController {
   }
 
   start() {
-    if(this.jbdsInstall.isSkipped()) {
+    if(this.jbdsInstall.isSkipped() || !this.jbdsInstall.isInstalled()) {
       this.exit();
     } else {
       this.launchDevstudio();
@@ -123,6 +141,6 @@ class StartController {
   }
 }
 
-StartController.$inject = ['installerDataSvc', 'electron'];
+StartController.$inject = ['installerDataSvc', 'electron', '$scope'];
 
 export default StartController;
