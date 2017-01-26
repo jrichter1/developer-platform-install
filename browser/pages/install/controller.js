@@ -8,10 +8,9 @@ class InstallController {
     this.$timeout = $timeout;
     this.installerDataSvc = installerDataSvc;
     this.failedDownloads = new Set();
-    this.failedInstalls = this.installerDataSvc.failedInstalls;
-    this.$scope.failures = this.failedInstalls;
     this.electron = electron;
     this.action = 'cancel';
+    this.$scope.failures = this.installerDataSvc.failedInstalls;
 
     this.data = {};
     for (var [key, value] of this.installerDataSvc.allInstallables().entries()) {
@@ -27,7 +26,15 @@ class InstallController {
   }
 
   getFailedInstalls() {
-    return Object.keys(this.failedInstalls);
+    let keys = Object.keys(this.$scope.failures);
+    if (keys.length === 1) {
+      this.$scope.tab = keys[0];
+    }
+    return keys;
+  }
+
+  setActiveError(key) {
+    this.$scope.tab = key;
   }
 
   processInstallable(key, value, itemProgress) {
@@ -61,13 +68,13 @@ class InstallController {
     });
   }
 
-  processErrors() {
+  processError(key) {
     switch (this.action) {
       case 'cancel':
-        this.cancelFailedInstalls();
+        this.cancelFailedInstall(key);
         break;
       case 'retry':
-        this.retryFailedInstalls();
+        this.retryFailedInstall(key);
         break;
       case 'exit':
         this.exit();
@@ -75,22 +82,18 @@ class InstallController {
     }
   }
 
-  cancelFailedInstalls() {
-    for (var key in this.failedInstalls) {
-      let progress = this.data[key];
-      this.installerDataSvc.cancelInstall(key, progress);
-    }
+  cancelFailedInstall(key) {
+    let progress = this.data[key];
+    this.installerDataSvc.cancelInstall(key, progress);
   }
 
-  retryFailedInstalls() {
-    for (var key in this.failedInstalls) {
-      let progress = this.data[key];
-      this.installerDataSvc.retryInstall(key, progress);
-    }
+  retryFailedInstall(key) {
+    let progress = this.data[key];
+    this.installerDataSvc.retryInstall(key, progress);
   }
 
   exit() {
-    Logger.info('Closing the installer window');
+    Logger.info('Exitting the installer');
     this.electron.remote.getCurrentWindow().removeAllListeners('close');
     this.electron.remote.getCurrentWindow().close();
   }

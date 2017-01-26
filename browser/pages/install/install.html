@@ -39,63 +39,59 @@
   </div>
 </div>
 
-<div class="close-modal" id="errorModal" style="top: -30px;" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" ng-show="instCtrl.getFailedInstalls().length > 0">
+<div class="close-modal" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" ng-show="instCtrl.getFailedInstalls().length > 0">
   <div class="modal-dialog">
     <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-          <span class="pficon pficon-close" ng-click="instCtrl.closeDownloadAgainDialog()"></span>
-        </button>
-        <h4 class="modal-title" id="myModalLabel">&nbsp;</h4>
-      </div>
       <div class="modal-body">
         <span id="tcIcon" class="pficon pficon-error-circle-o"></span>
         <strong id="tcMessage" class="error">Component(s) failed to install.</strong>
 
-        <div class="list-group">
-            <div ng-repeat="(key, value) in failures" class="list-group-item">
-              <strong>{{data[key].productName}}</strong> reports the following error:
-              <ul class="list-group-item">
-               <li><strong>{{value.error}}</strong></li>
-               You can find more detailed information in the log files located in the target directory.
-              </ul>
-              <div ng-show="value.blocked.length > 0">
-                The following components require {{data[key].productName}} to be installed in order to proceed:
-                <ul class="list-group-item">
-                  <li ng-repeat="component in value.blocked"><strong>{{data[component].productName}}</strong></li>
-                </ul>
-              </div>
+        <ul class="nav nav-tabs" ng-show="instCtrl.getFailedInstalls().length > 1">
+          <li ng-repeat="(key, value) in failures" ng-click="instCtrl.setActiveError(key)" ng-class="{active: tab === key}">
+            <a href="javascript:void(0)">{{data[key].productName}}</a>
+          </li>
+        </ul>
 
-              <div ng-show="value.queue.length > 0">
-                The following components are queued to install after {{data[key].productName}} has finished, but their installation does not require it:
-                <ul class="list-group-item">
-                  <li ng-repeat="component in value.queue">{{data[component].productName}}</li>
-                </ul>
-              </div>
-            </div>
+        <div ng-repeat="(key, value) in failures" ng-show="tab === key || instCtrl.getFailedInstalls().length === 1">
+          <strong>{{data[key].productName}}</strong> reports the following error:
+          <ul class="list-group-item">
+           <li><strong>{{value.error}}</strong></li>
+           You can find more detailed information in the log files located in the target directory.
+          </ul>
+          <div ng-show="value.blocked.length > 0">
+            The following components require {{data[key].productName}} to be installed in order to proceed:
+            <ul class="list-group-item">
+              <li ng-repeat="component in value.blocked"><strong>{{data[component].productName}}</strong></li>
+            </ul>
+          </div>
+
+          <div ng-show="value.queue.length > 0">
+            The following components are queued to install after {{data[key].productName}} has finished, but their installation does not require it:
+            <ul class="list-group-item">
+              <li ng-repeat="component in value.queue">{{data[component].productName}}</li>
+            </ul>
+          </div>
+          <div>
+            Please choose how you would like to proceed:
+            <form name="errorForm" id="errorForm" class="form-horizontal" ng-submit="instCtrl.processError(tab)">
+              <label>
+                <input type="radio" ng-model="instCtrl.action" value="cancel">
+                Cancel the installation of {{data[key].productName}} and components that require it. Other components will continue installing.
+              </label><br/>
+              <label>
+                <input type="radio" ng-model="instCtrl.action" value="retry">
+                Try to install {{data[key].productName}} again (might lead to the same error).
+              </label><br/>
+              <label>
+                <input type="radio" ng-model="instCtrl.action" value="exit">
+                Exit the installer.
+              </label><br/>
+            </form>
+          </div>
         </div>
 
-        <div>
-          Please choose how you would like to proceed:
-          <form name="errorForm" id="errorForm" class="form-horizontal" ng-submit="instCtrl.processErrors()">
-            <label>
-              <input type="radio" ng-model="instCtrl.action" value="cancel">
-              Cancel the failed components and install what can be installed.
-            </label><br/>
-            <label>
-              <input type="radio" ng-model="instCtrl.action" value="retry">
-              Try to install the failed components again (might lead to the same error).
-            </label><br/>
-            <label>
-              <input type="radio" ng-model="instCtrl.action" value="exit">
-              Exit the installer.
-            </label><br/>
-          </form>
-        </div>
       </div>
       <div class="modal-footer">
-        <!-- <button type="button" class="btn btn-primary" ng-click="instCtrl.cancelFailedInstalls()">Cancel Item</button>
-        <button type="button" class="btn btn-primary" ng-click="instCtrl.exit()">Exit Installer</button> -->
         <button type="submit" id="error-action-btn" class="go-btn footer-btns btn btn-primary btn-lg" form="errorForm">Confirm</button>
       </div>
     </div>
