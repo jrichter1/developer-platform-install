@@ -1,78 +1,18 @@
 'use strict';
 
 import chai, { expect } from 'chai';
-import sinon from 'sinon';
-import { default as sinonChai } from 'sinon-chai';
 import fs from 'fs-extra';
 import path from 'path';
 import rimraf from 'rimraf';
-import Logger from 'browser/services/logger';
 import Platform from 'browser/services/platform';
-import Downloader from 'browser/model/helpers/downloader';
 import Util from 'browser/model/helpers/util';
-import JdkInstall from 'browser/model/jdk-install';
 import Installer from 'browser/model/helpers/installer';
-import Hash from 'browser/model/helpers/hash';
-import InstallerDataService from 'browser/services/data';
-import {ProgressState} from 'browser/pages/install/controller';
-import mockfs from 'mock-fs';
-chai.use(sinonChai);
+import JdkInstall from 'browser/model/jdk-install';
+import {testBase, downloadTest, installerDataSvc, sandbox, installer, infoStub, errorStub, sha256Stub, downloadUrl, fakeProgress, success, failure} from './common';
 
 describe('JDK installer', function() {
-  let installerDataSvc, sandbox, installer;
-  let infoStub, errorStub, sha256Stub;
-  let downloadUrl = 'http://www.azulsystems.com/products/zulu/downloads';
-
-  installerDataSvc = sinon.stub(new InstallerDataService());
-  installerDataSvc.getRequirementByName.restore();
-  installerDataSvc.tempDir.returns('tempDirectory');
-  installerDataSvc.installDir.returns('installationFolder');
-  installerDataSvc.jdkDir.returns('install/jdk8');
-  installerDataSvc.getUsername.returns('user');
-  installerDataSvc.getPassword.returns('passwd');
-
-  let fakeProgress;
-
-  let success = () => {};
-  let failure = () => {};
-
-  before(function() {
-    infoStub = sinon.stub(Logger, 'info');
-    errorStub = sinon.stub(Logger, 'error');
-    sha256Stub = sinon.stub(Hash.prototype, 'SHA256').callsFake(function(file, cb) { cb('hash'); });
-
-    mockfs({
-      'tempDirectory' : {
-        'jdk.msi': 'file content here',
-        'test' : 'empty'
-      },
-      'installationFolder' : {
-        'zulu': {}
-      }
-    }, {
-      createCwd: false,
-      createTmp: false
-    });
-  });
-
-  after(function() {
-    mockfs.restore();
-    infoStub.restore();
-    errorStub.restore();
-    sha256Stub.restore();
-  });
-
-  beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-    installer = new JdkInstall(installerDataSvc, 'jdk8', downloadUrl, 'jdk.msi', 'sha');
-    fakeProgress = sandbox.stub(new ProgressState());
-    fakeProgress.$timeout = sinon.stub().yields();
-    fakeProgress.$scope = {$apply: function () {}};
-  });
-
-  afterEach(function () {
-    sandbox.restore();
-  });
+  testBase('jdk');
+  downloadTest('jdk');
 
   function mockDetectedJvm(version, location = 'java.home = /java/home\n') {
     sandbox.stub(JdkInstall.prototype, 'findMsiInstalledJava').returns(Promise.resolve(''));
@@ -83,56 +23,28 @@ describe('JDK installer', function() {
     sandbox.stub(Util, 'executeFile').returns(Promise.resolve(true));
   }
 
-  describe('when instantiated', function() {
-
-    it('should fail when no url is set and installed file not defined', function() {
-      expect(function() {
-        new JdkInstall(installerDataSvc, null, null, null);
-      }).to.throw('No download URL set');
-    });
-
-    it('should fail when no url is set and installed file is empty', function() {
-      expect(function() {
-        new JdkInstall(installerDataSvc, null, null, '');
-      }).to.throw('No download URL set');
-    });
-
-    it('should download jdk installer to temporary folder with confiugured file name', function() {
-      expect(new JdkInstall(installerDataSvc, 'jdk8', 'url', 'jdk.msi', 'sha').downloadedFile).to.equal(
-        path.join('tempDirectory', 'jdk.msi'));
-    });
-  });
-
-  // FIXME expect calls in done callback does not report errors
-  // because if expect fails it gets cought in catch() and then
-  // function callback done called again
   describe('when detecting existing installation', function() {
-    let jdk;
-    beforeEach(function() {
-      jdk = new JdkInstall(installerDataSvc, 'jdk8', 'url', 'jdk8.msi', 'sha');
-    });
-
     it('should detect java location if installed', function() {
       mockDetectedJvm('1.8.0_111');
-      return jdk.detectExistingInstall().then(()=>{
-        expect(jdk.selectedOption).to.be.equal('detected');
-        expect(jdk.hasOption('detected')).to.be.equal(true);
-        expect(jdk.getLocation()).to.be.equal('/java/home');
+      return installer.detectExistingInstall().then(()=>{
+        expect(installer.selectedOption).to.be.equal('detected');
+        expect(installer.hasOption('detected')).to.be.equal(true);
+        expect(installer.getLocation()).to.be.equal('/java/home');
       });
     });
 
     it('should create deafult empty callback if not provided', function() {
       mockDetectedJvm('1.8.0_1');
       try {
-        jdk.detectExistingInstall();
+        installer.detectExistingInstall();
       } catch (exception)  {
         expect.fail('Did not created default empty callback');
       }
     });
 
     it('should not fail if selected option is not present in available options', function() {
-      jdk.selectedOption = 'detected';
-      jdk.validateVersion();
+      installer.selectedOption = 'detected';
+      installer.validateVersion();
     });
 
     describe('on windows', function() {
@@ -142,55 +54,54 @@ describe('JDK installer', function() {
 
       it('should select openjdk for installation if no java detected', function() {
         mockDetectedJvm('');
-        return jdk.detectExistingInstall().then(()=>{
-          expect(jdk.selectedOption).to.be.equal('install');
-          expect(jdk.getLocation()).to.be.equal('');
+        return installer.detectExistingInstall().then(()=>{
+          expect(installer.selectedOption).to.be.equal('install');
+          expect(installer.getLocation()).to.be.equal('');
         });
       });
-
 
       // FIXME is not the case for JDK 9, because version has different format
       it('should select openjdk for installation if newer than supported java version detected', function() {
         mockDetectedJvm('1.9.0_1');
-        return jdk.detectExistingInstall().then(()=>{
-          expect(jdk.selectedOption).to.be.equal('detected');
+        return installer.detectExistingInstall().then(()=>{
+          expect(installer.selectedOption).to.be.equal('detected');
         });
       });
 
       it('should select openjdk for installation if older than supported java version detected', function() {
         mockDetectedJvm('1.7.0_1');
-        return jdk.detectExistingInstall().then(()=>{
-          expect(jdk.selectedOption).to.be.equal('install');
+        return installer.detectExistingInstall().then(()=>{
+          expect(installer.selectedOption).to.be.equal('install');
         });
       });
 
       it('should reject openjdk if location for java is not found', function() {
         mockDetectedJvm('1.8.0', '');
-        return jdk.detectExistingInstall().then(()=> {
-          expect(jdk.selectedOption).to.be.equal('install');
+        return installer.detectExistingInstall().then(()=> {
+          expect(installer.selectedOption).to.be.equal('install');
         });
       });
 
       it('should check for available msi installtion', function() {
         mockDetectedJvm('1.8.0_1');
-        jdk.findMsiInstalledJava.restore();
-        return jdk.detectExistingInstall().then(()=>{
+        installer.findMsiInstalledJava.restore();
+        return installer.detectExistingInstall().then(()=>{
           expect(Util.writeFile).to.have.been.calledWith(
-            jdk.getMsiSearchScriptLocation(), jdk.getMsiSearchScriptData());
+            installer.getMsiSearchScriptLocation(), installer.getMsiSearchScriptData());
           expect(Util.executeFile).to.have.been.calledWith(
-            'powershell', jdk.getMsiSearchScriptPowershellArgs(jdk.getMsiSearchScriptLocation()));
+            'powershell', installer.getMsiSearchScriptPowershellArgs(installer.getMsiSearchScriptLocation()));
         });
       });
 
       it('should remove detected option and mark for installation in case detection ran agian an nothing detected', function() {
         mockDetectedJvm('1.9.0_1');
-        return jdk.detectExistingInstall().then(()=>{
-          expect(jdk.selectedOption).to.be.equal('detected');
+        return installer.detectExistingInstall().then(()=>{
+          expect(installer.selectedOption).to.be.equal('detected');
           Util.executeCommand.rejects();
-          return jdk.detectExistingInstall();
+          return installer.detectExistingInstall();
         }).then(()=>{
-          expect(jdk.selectedOption).equals('install');
-          expect(jdk.option['detected']).to.equal(undefined);
+          expect(installer.selectedOption).equals('install');
+          expect(installer.option['detected']).to.equal(undefined);
         });
       });
     });
@@ -202,29 +113,29 @@ describe('JDK installer', function() {
 
       it('should not select jdk for installation if no java detected', function() {
         mockDetectedJvm('');
-        return jdk.detectExistingInstall().then(()=>{
-          expect(jdk.selectedOption).to.be.equal('detected');
+        return installer.detectExistingInstall().then(()=>{
+          expect(installer.selectedOption).to.be.equal('detected');
         });
       });
 
       it('should not select openjdk for installation if newer than supported supported version detected', function() {
         mockDetectedJvm('1.9.0_1');
-        return jdk.detectExistingInstall().then(()=>{
-          expect(jdk.selectedOption).to.be.equal('detected');
+        return installer.detectExistingInstall().then(()=>{
+          expect(installer.selectedOption).to.be.equal('detected');
         });
       });
 
       it('should not select openjdk for installation if older than supported supported java version detected', function() {
         mockDetectedJvm('1.7.0_1');
-        return jdk.detectExistingInstall().then(()=>{
-          expect(jdk.selectedOption).to.be.equal('detected');
+        return installer.detectExistingInstall().then(()=>{
+          expect(installer.selectedOption).to.be.equal('detected');
         });
       });
 
       it('should not check for available msi installtion', function() {
         mockDetectedJvm('1.8.0_1');
-        jdk.findMsiInstalledJava.restore();
-        return jdk.detectExistingInstall().then(()=>{
+        installer.findMsiInstalledJava.restore();
+        return installer.detectExistingInstall().then(()=>{
           expect(Util.executeFile).to.have.not.been.called;
           expect(Util.writeFile).to.have.not.been.called;
         });
@@ -232,56 +143,16 @@ describe('JDK installer', function() {
 
       it('should remove detected option and mark as detected in case detection ran agian an nothing detected', function() {
         mockDetectedJvm('1.9.0_1');
-        return jdk.detectExistingInstall().then(()=>{
-          expect(jdk.selectedOption).to.be.equal('detected');
-          expect(jdk.option.detected.version).to.be.equal('1.9.0');
+        return installer.detectExistingInstall().then(()=>{
+          expect(installer.selectedOption).to.be.equal('detected');
+          expect(installer.option.detected.version).to.be.equal('1.9.0');
           Util.executeCommand.rejects();
-          return jdk.detectExistingInstall();
+          return installer.detectExistingInstall();
         }).then(()=>{
-          expect(jdk.option['detected']).to.be.equal(undefined);
-          expect(jdk.selectedOption).to.be.equal('detected');
+          expect(installer.option['detected']).to.be.equal(undefined);
+          expect(installer.selectedOption).to.be.equal('detected');
         });
       });
-    });
-  });
-
-  describe('when downloading the jdk msi', function() {
-    let downloadStub;
-
-    beforeEach(function() {
-      downloadStub = sandbox.stub(Downloader.prototype, 'downloadAuth').returns();
-    });
-
-    it('should set progress to "Downloading"', function() {
-      sandbox.stub(fs, 'existsSync').returns(false);
-      installer.downloadInstaller(fakeProgress, success, failure);
-
-      expect(fakeProgress.setStatus).to.have.been.calledOnce;
-      expect(fakeProgress.setStatus).to.have.been.calledWith('Downloading');
-    });
-
-    it('should write the data into temp/jdk.msi', function() {
-      let spy = sandbox.spy(fs, 'createWriteStream');
-
-      installer.downloadInstaller(fakeProgress, success, failure);
-
-      expect(spy).to.have.been.calledOnce;
-      expect(spy).to.have.been.calledWith(path.join('tempDirectory', 'jdk.msi'));
-    });
-
-    it('should call downloader#download with the specified parameters once', function() {
-      installer.downloadInstaller(fakeProgress, success, failure);
-
-      expect(downloadStub).to.have.been.calledOnce;
-      expect(downloadStub).to.have.been.calledWith(downloadUrl);
-    });
-
-    it('should skip download when the file is found in the download folder', function() {
-      sandbox.stub(fs, 'existsSync').returns(true);
-
-      installer.downloadInstaller(fakeProgress, success, failure);
-
-      expect(downloadStub).not.called;
     });
   });
 
@@ -333,7 +204,6 @@ describe('JDK installer', function() {
     it('should call success callback if install was sucessful but redirected to different location', function() {
       sandbox.stub(Installer.prototype, 'execFile').returns(Promise.resolve(true));
       sandbox.stub(Util, 'findText').returns(Promise.resolve('Dir (target): Key: INSTALLDIR	, Object: target/install'));
-      installer = new JdkInstall(installerDataSvc, 'jdk8', downloadUrl, 'jdk8.msi', 'sha');
       return new Promise((resolve, reject)=> {
         installer.install(fakeProgress, resolve, reject);
       }).catch((error)=>{
@@ -344,7 +214,6 @@ describe('JDK installer', function() {
     it('should call success callback if install was sucessful but search for actual location failed', function(done) {
       sandbox.stub(Installer.prototype, 'exec').returns(Promise.resolve(true));
       sandbox.stub(Util, 'findText').returns(Promise.reject('failure'));
-      installer = new JdkInstall(installerDataSvc, 'jdk8', downloadUrl, 'jdk8.msi', 'sha');
       return installer.install(fakeProgress, function() {
         done();
       }, function() {
@@ -365,7 +234,6 @@ describe('JDK installer', function() {
       sandbox.stub(require('child_process'), 'execFile').yields();
       sandbox.stub(Installer.prototype, 'execFile').returns(Promise.resolve(true));
       sandbox.stub(Util, 'findText').returns(Promise.resolve('Dir \(target\): Key: INSTALLDIR	, Object: target/install'));
-      installer = new JdkInstall(installerDataSvc, 'jdk8', downloadUrl, 'jdk8.msi', 'sha');
       sandbox.stub(installer, 'getLocation').returns('target/install');
       installerDataSvc.jdkRoot = 'install/jdk8';
       return installer.install(fakeProgress, function() {

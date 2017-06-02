@@ -1,192 +1,20 @@
 'use strict';
 
 import chai, { expect } from 'chai';
-import { default as sinonChai } from 'sinon-chai';
 import fs from 'fs-extra';
 import path from 'path';
-import CDKInstall from 'browser/model/cdk';
-import Logger from 'browser/services/logger';
-import Downloader from 'browser/model/helpers/downloader';
 import Installer from 'browser/model/helpers/installer';
-import Hash from 'browser/model/helpers/hash';
 import InstallerDataService from 'browser/services/data';
-import {ProgressState} from 'browser/pages/install/controller';
 import Platform from 'browser/services/platform';
 import InstallableItem from 'browser/model/installable-item';
 import child_process from 'child_process';
-import mockfs from 'mock-fs';
-import loadMetadata from 'browser/services/metadata';
-chai.use(sinonChai);
-
-let sinon  = require('sinon');
-
-
+import {testBase, downloadTest, installerDataSvc, sandbox, installer, infoStub, errorStub, sha256Stub, downloadUrl, fakeProgress, fakeInstallable, success, failure} from './common';
 
 describe('CDK installer', function() {
-  let sandbox, installerDataSvc;
-  let infoStub, errorStub, sha256Stub;
-
-  let fakeProgress;
-
-  installerDataSvc = sinon.stub(new InstallerDataService());
-  installerDataSvc.getRequirementByName.restore();
-  installerDataSvc.tempDir.returns('temporaryFolder');
-  installerDataSvc.installDir.returns('installFolder');
-  installerDataSvc.getUsername.returns('user');
-  installerDataSvc.getPassword.returns('password');
-  installerDataSvc.cdkDir.returns(path.join(installerDataSvc.installDir(), 'cdk'));
-  installerDataSvc.ocDir.returns(path.join(installerDataSvc.cdkDir(), 'bin'));
-  installerDataSvc.virtualBoxDir.returns(path.join(installerDataSvc.installDir(), 'virtualbox'));
-  installerDataSvc.cdkBoxDir.returns(installerDataSvc.cdkDir());
-  installerDataSvc.cdkMarker.returns(path.join(installerDataSvc.cdkDir(), '.cdk'));
-
-  let installer;
-
-  before(function() {
-    infoStub = sinon.stub(Logger, 'info');
-    errorStub = sinon.stub(Logger, 'error');
-    sha256Stub = sinon.stub(Hash.prototype, 'SHA256').callsFake(function(file, cb) { cb('hash'); });
-  });
-
-  after(function() {
-    infoStub.restore();
-    errorStub.restore();
-    sha256Stub.restore();
-  });
-
-  let reqs = loadMetadata(require('../../../requirements.json'), process.platform);
-
-  let cdkUrl = reqs['cdk'].url;
-
-  let success = () => {};
-  let failure = () => {};
-
-  function stubInstaller() {
-    let svc = new InstallerDataService({}, reqs);
-    svc.cdkRoot = 'cdkLocation';
-    svc.ocBinRoot = 'ocBinRoot';
-    svc.vboxRoot = 'virtualboxLocation';
-    svc.cygwinRoot = 'cygwinLocation';
-    let cygwin;
-    if (process.platform === 'win32') {
-      svc.addItemsToInstall(
-        new InstallableItem('cygwin', 'url', 'cygwin.exe', 'cygwin', svc, false)
-      );
-      cygwin = svc.getInstallable('cygwin');
-      cygwin.addOption('install', '1.0.0', 'cygwin', true);
-    } else {
-      svc.requirements['hyperv'] = {};
-    }
-    svc.addItemsToInstall(
-      new InstallableItem('virtualbox', 'url', 'virtualbox.exe', 'virtualbox', svc, false)
-    );
-    let virtualbox = svc.getInstallable('virtualbox');
-    virtualbox.addOption('install', '1.0.0', 'virtualbox', true);
-
-    let cdk = new CDKInstall(svc, 'folderName', cdkUrl, 'file.exe', 'sha1');
-    return {
-      svc,
-      virtualbox,
-      cygwin,
-      cdk
-    };
-  }
-
-  beforeEach(function () {
-    mockfs({
-      'Users' : {
-        'dev1': {
-          '.minishift': {
-            'cache': {
-              'oc': {
-                '1.4.1': {
-                  'oc.exe': 'executable code',
-                  'oc': 'executable code'
-                }
-              }
-            }
-          }
-        }
-      },
-      temporaryFolder: {},
-      installFolder: {
-        cdk: {
-          plugins : {
-            'some-file.gem': 'file content here'
-          }
-        }
-      }
-    }, {
-      createCwd: false,
-      createTmp: false
-    });
-    installer = new CDKInstall(installerDataSvc, 'folderName', cdkUrl, 'installFile.zip', 'sha1');
-    installer.ipcRenderer = { on: function() {} };
-    sandbox = sinon.sandbox.create();
-    fakeProgress = sandbox.stub(new ProgressState());
-  });
-
-  afterEach(function () {
-    sandbox.restore();
-    mockfs.restore();
-  });
-
-  it('should fail when some download url is not set and installed file not defined', function() {
-    expect(function() {
-      new CDKInstall(installerDataSvc, 'folderName', null, 'installFile', 'sha1');
-    }).to.throw('No download URL set');
-  });
-
-  it('should download files when no installation is found', function() {
-    expect(new CDKInstall(installerDataSvc, 'folderName', 'cdkUrl', 'installFile', 'sha1').useDownload).to.be.true;
-  });
-
-  describe('files download', function() {
-    let authStub;
-
-    beforeEach(function() {
-      authStub = sandbox.stub(Downloader.prototype, 'downloadAuth').returns();
-    });
-
-    it('should set progress to "Downloading"', function() {
-      installer.downloadInstaller(fakeProgress, success, failure);
-
-      expect(fakeProgress.setStatus).to.have.been.calledWith('Downloading');
-    });
-
-    it('should write the data into temp folder', function() {
-      let streamSpy = sandbox.spy(Downloader.prototype, 'setWriteStream');
-      let fsSpy = sandbox.spy(fs, 'createWriteStream');
-
-      installer.downloadInstaller(fakeProgress, success, failure);
-
-      //expect 3 streams to be set and created
-      expect(streamSpy.callCount).to.equal(1);
-      expect(fsSpy.callCount).to.equal(1);
-      expect(fsSpy).calledWith(installer.downloadedFile);
-    });
-
-    it('should call a correct downloader request for cdk file', function() {
-      installer = new CDKInstall(installerDataSvc, 'folderName', cdkUrl, 'installFile', 'sha1');
-      installer.downloadInstaller(fakeProgress, success, failure);
-
-      expect(authStub.callCount).to.equal(1);
-      expect(authStub).calledWith(cdkUrl, installerDataSvc.getUsername(), installerDataSvc.getPassword());
-    });
-
-    it('should skip download when the files are located in downloads folder', function() {
-      let spy = sandbox.spy(Downloader.prototype, 'closeHandler');
-      sandbox.stub(fs, 'existsSync').returns(true);
-
-      installer.downloadInstaller(fakeProgress, success, failure);
-
-      expect(authStub).not.called;
-      expect(spy.callCount).to.equal(1);
-    });
-  });
+  testBase('cdk');
+  downloadTest('cdk');
 
   describe('installAfterRequirements', function() {
-
     it('should set progress to "Installing"', function() {
       sandbox.stub(Installer.prototype, 'unzip').rejects('done');
       installer.installAfterRequirements(fakeProgress, success, failure);
@@ -195,7 +23,7 @@ describe('CDK installer', function() {
     });
 
     it('should fail for cdk file without known extension', function() {
-      installer = new CDKInstall(installerDataSvc, 'folderName', cdkUrl, 'installFile.aaa', 'sha1');
+      installer.downloadedFile = 'cdk.foo';
       sandbox.stub(Platform, 'getUserHomePath').returns(Promise.resolve('home'));
       let stubCopy = sandbox.stub(Installer.prototype, 'copyFile');
       let stubUnzip = sandbox.stub(Installer.prototype, 'unzip');
@@ -210,7 +38,6 @@ describe('CDK installer', function() {
     describe('on windows', function() {
       beforeEach(function() {
         sandbox.stub(Platform, 'getOS').returns('win32');
-        ( {cdk: installer} = stubInstaller() );
         sandbox.stub(Platform, 'getUserHomePath').returns(Promise.resolve(path.join('Users', 'dev1')));
         sandbox.stub(Installer.prototype, 'copyFile').resolves();
         sandbox.stub(Installer.prototype, 'exec').resolves();
@@ -222,7 +49,7 @@ describe('CDK installer', function() {
       it('should copy cdk exe file to install folder', function(done) {
         installer.installAfterRequirements(fakeProgress, function success() {
           expect(Installer.prototype.copyFile).to.have.been.called;
-          expect(Installer.prototype.copyFile).calledWith(installer.downloadedFile, path.join(installer.installerDataSvc.ocDir(), 'minishift.exe'));
+          expect(Installer.prototype.copyFile).calledWith(installer.downloadedFile, path.join(installerDataSvc.ocDir(), 'minishift.exe'));
           done();
         }, function failure(e) {
           console.log(e);
@@ -235,22 +62,23 @@ describe('CDK installer', function() {
           installer.installAfterRequirements(fakeProgress, resolve, reject);
         }).then(()=> {
           expect(Installer.prototype.exec).to.have.been.calledWith(
-              path.join('ocBinRoot', 'minishift.exe') + ' setup-cdk --force --default-vm-driver=virtualbox',
+              path.join(installerDataSvc.ocDir(), 'minishift.exe') + ' setup-cdk --force --default-vm-driver=virtualbox',
               {PATH:''}
             );
           expect(installer.createEnvironment).to.have.been.called;
         });
       });
 
-      it('should run downloaded file with virtualbox driver if no hyper-v detected', function() {
-        let hyperv = new InstallableItem('hyperv', 'url', 'file', 'folder', installer.installerDataSvc, false);
+      it('should run downloaded file with hyper-v if detected', function() {
+        let hyperv = new InstallableItem('hyperv', 'url', 'file', 'folder', installerDataSvc, false);
         hyperv.addOption('detected');
-        installer.installerDataSvc.addItemsToInstall(hyperv);
+        installerDataSvc.getInstallable.withArgs('hyperv').returns(hyperv);
+
         return new Promise((resolve, reject)=> {
           installer.installAfterRequirements(fakeProgress, resolve, reject);
         }).then(()=> {
           expect(Installer.prototype.exec).to.have.been.calledWith(
-              path.join('ocBinRoot', 'minishift.exe') + ' setup-cdk --force --default-vm-driver=hyperv',
+              path.join(installerDataSvc.ocDir(), 'minishift.exe') + ' setup-cdk --force --default-vm-driver=hyperv',
               {PATH:''}
             );
           expect(installer.createEnvironment).to.have.been.called;
@@ -271,7 +99,7 @@ describe('CDK installer', function() {
         }).then(()=> {
           expect(Platform.addToUserPath).calledWith([
             path.join(process.cwd(), 'Users', 'dev1', '.minishift', 'cache', 'oc', '1.4.1', 'oc.exe'),
-            path.join('ocBinRoot', 'minishift.exe')
+            path.join(installerDataSvc.ocDir(), 'minishift.exe')
           ]);
         });
       });
@@ -301,16 +129,11 @@ describe('CDK installer', function() {
           expect.fail();
         });
       });
-
-      afterEach(function() {
-        sandbox.restore();
-      });
     });
 
     describe('on macos', function() {
       beforeEach(function() {
         sandbox.stub(Platform, 'getOS').returns('darwin');
-        ( {cdk: installer} = stubInstaller() );
         sandbox.stub(Platform, 'getUserHomePath').returns(Promise.resolve(path.join('Users', 'dev1')));
         sandbox.stub(Installer.prototype, 'copyFile').resolves();
         sandbox.stub(Installer.prototype, 'exec').resolves();
@@ -332,7 +155,7 @@ describe('CDK installer', function() {
         return new Promise((resolve, reject)=>{
           installer.installAfterRequirements(fakeProgress, resolve, reject);
         }).then(()=>{
-          expect(child_process.exec).calledWith('chmod +x ' + path.join('ocBinRoot', 'minishift'));
+          expect(child_process.exec).calledWith('chmod +x ' + path.join(installerDataSvc.ocDir(), 'minishift'));
           expect(child_process.exec).calledWith('chmod +x ' + path.join(process.cwd(), 'Users', 'dev1', '.minishift', 'cache', 'oc', '1.4.1', 'oc'));
         });
       });
@@ -343,23 +166,27 @@ describe('CDK installer', function() {
         }).then(()=>{
           expect(Platform.addToUserPath).calledWith([
             path.join(process.cwd(), 'Users', 'dev1', '.minishift', 'cache', 'oc', '1.4.1', 'oc'),
-            path.join('ocBinRoot', 'minishift')
+            path.join(installerDataSvc.ocDir(), 'minishift')
           ]);
         });
       });
     });
-
-    afterEach(function() {
-      sandbox.restore();
-    });
   });
 
-  describe('createEnvironment', function() {
+  describe('createEnvironment', function() {    
+    beforeEach(function() {
+      let cygwin = new InstallableItem('cygwin', 'url', 'cygwin.exe', 'cygwin', installerDataSvc, false);
+      let vbox = new InstallableItem('virtualbox', 'url', 'virtualbox.exe', 'virtualbox', installerDataSvc, false);
+
+      installerDataSvc.getInstallable.withArgs('cygwin').returns(cygwin);
+      installerDataSvc.getInstallable.withArgs('virtualbox').returns(vbox);
+    });
+
     describe('on macos', function() {
       beforeEach(function() {
         sandbox.stub(Platform, 'getOS').returns('darwin');
-        ( {cdk: installer} = stubInstaller() );
       });
+
       it('returns copy of Platform.ENV with virtualbox location added to PATH', function() {
         sandbox.stub(Platform, 'getEnv').returns({'PATH':'path'});
         let pathArray = ['virtualbox', 'path'];
@@ -368,6 +195,7 @@ describe('CDK installer', function() {
         }
         expect(installer.createEnvironment()[Platform.PATH]).to.be.equal(pathArray.join(path.delimiter));
       });
+
       it('does not use empty path', function() {
         sandbox.stub(Platform, 'getEnv').returns({'PATH':''});
         let pathArray = ['virtualbox'];
@@ -381,8 +209,8 @@ describe('CDK installer', function() {
     describe('on windows', function() {
       beforeEach(function() {
         sandbox.stub(Platform, 'getOS').returns('win32');
-        ( {cdk: installer} = stubInstaller() );
       });
+
       it('returns copy of Platform.ENV with virtualbox and cygwin locations added to PATH', function() {
         sandbox.stub(Platform, 'getEnv').returns({'Path':'path'});
         let pathArray = ['virtualbox', 'path'];
@@ -391,6 +219,7 @@ describe('CDK installer', function() {
         }
         expect(installer.createEnvironment()[Platform.PATH]).to.be.equal(pathArray.join(path.delimiter));
       });
+
       it('does not use empty path', function() {
         sandbox.stub(Platform, 'getEnv').returns({'Path':''});
         let pathArray = ['virtualbox'];
