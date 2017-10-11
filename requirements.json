@@ -17,7 +17,15 @@
     "useDownload": true,
     "requires": ["jdk"],
     "size": 677689480,
-    "installSize": 747143168
+    "installSize": 747143168,
+    "platform": {
+      "win32": {
+        "size": 677689480
+      },
+      "darwin": {
+        "size": 677694419
+      }
+    }
   },
   "jdk": {
     "description": "A free and open source implementation of the Java Platform, Standard Edition (Java SE)",
@@ -101,7 +109,7 @@
         "fileName": "minishift_3_2_0__alpha_1",
         "sha256sum": "30fb2487a1086052a11a7c05067bab9c3e010e7dbb69972a49ff7fedfa813d6c",
         "version": "3.2.0-alpha.1",
-        "size": 487542784,
+        "size": 487542112,
         "installSize" : 836390912,
         "requires": ["virtualbox"],
         "installAfter": "virtualbox"
@@ -148,7 +156,7 @@
         "url": "https://developers.redhat.com/redirect/to/kompose-macos-1.0.0.download",
         "fileName": "kompose-1.0.0.TP-darwin-amd64",
         "sha256sum": "f987bb6405203379fc9da5903e34a089cb125e14ed10195f25a635c471c0ef97",
-        "size": 47349760,
+        "size": 46949472,
         "installSize": 47349760
       },
       "linux": {
