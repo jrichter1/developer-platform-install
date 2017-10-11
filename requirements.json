@@ -16,7 +16,7 @@
     "version": "11.1.0.GA",
     "useDownload": true,
     "requires": ["jdk"],
-    "size": 676727735,
+    "size": 677689480,
     "installSize": 747143168
   },
   "jdk": {
@@ -128,7 +128,6 @@
     "detectable": false,
     "targetFolderName": "kompose",
     "version": "1.0.0 Technology Preview",
-    "installSize": 47349760,
     "installAfter": "cdk",
     "messages": {
       "info": {
@@ -142,7 +141,7 @@
         "url": "https://developers.redhat.com/redirect/to/kompose-windows-1.0.0.download",
         "fileName": "kompose-1.0.0.TP-windows-amd64.exe",
         "sha256sum": "f06c1156cbc427e83e08840fc352639086b142f02ded45c3381f5bc5dd5ee57d",
-        "size": 47349760,
+        "size": 47348736,
         "installSize": 47349760
       },
       "darwin": {
@@ -195,7 +194,7 @@
     "installAfter": "fusetools",
     "requires": "jdk",
     "version": "6.3.0.GA",
-    "size": 228052992,
+    "size": 228049060,
     "installSize": 1045204992,
     "sha256sum": "",
     "file": {
