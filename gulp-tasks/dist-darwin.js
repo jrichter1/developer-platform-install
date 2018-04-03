@@ -37,11 +37,12 @@ function buildInstaller(gulp, origin, destination, extraFiles) {
   }).then(() => {
     return new Promise((resolve, reject)=>{
       gulp.src(origin)
+        .pipe(rename(destination))
         .pipe(gulp.dest('./')).on('end', resolve).on('error', reject);
     });
   }).then(()=>{
     return new Promise((resolve, reject)=>{
-      common.createSHA256File(origin, function(error) {
+      common.createSHA256File(destination, function(error) {
         if(error) {
           reject(error);
         } else {
@@ -67,7 +68,7 @@ function darwinDist(gulp, reqs) {
 
   gulp.task('dist-bundle', ['prefetch'], function() {
     return buildInstaller(gulp,
-      `dist/${productName}-${productVersion}-mac.dmg`,
+      `dist/${productName}-${productVersion}.dmg`,
       `dist/devsuite-${productVersion}-bundle-installer-mac.dmg`,
       [{
         'from': 'requirements-cache',
@@ -78,13 +79,13 @@ function darwinDist(gulp, reqs) {
 
   gulp.task('dist-simple', function() {
     return buildInstaller(gulp,
-      `dist/${productName}-${productVersion}-mac.dmg`,
+      `dist/${productName}-${productVersion}.dmg`,
       `dist/devsuite-${productVersion}-installer-mac.dmg`
     );
   });
 
   gulp.task('cleanup', function() {
-    return del(['dist/mac', `dist/${productName}-${productVersion}-mac.blockmap`],
+    return del(['dist/mac', `dist/${productName}-${productVersion}.blockmap`],
       { force: false });
   });
 
