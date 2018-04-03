@@ -79,13 +79,13 @@ function darwinDist(gulp, reqs) {
 
   gulp.task('dist-simple', function() {
     return buildInstaller(gulp,
-      `dist/${productName}-${productVersion}-mac.zip`,
-      `dist/devsuite-${productVersion}-installer-mac.zip`
+      `dist/${productName}-${productVersion}-mac.dmg`,
+      `dist/devsuite-${productVersion}-installer-mac.dmg`
     );
   });
 
   gulp.task('cleanup', function() {
-    return del(['dist/mac', `dist/${productName}-${productVersion}-mac.zip`],
+    return del(['dist/mac', `dist/${productName}-${productVersion}-mac.blockmap`],
       { force: false });
   });
 
