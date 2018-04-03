@@ -37,12 +37,11 @@ function buildInstaller(gulp, origin, destination, extraFiles) {
   }).then(() => {
     return new Promise((resolve, reject)=>{
       gulp.src(origin)
-        .pipe(rename(destination))
         .pipe(gulp.dest('./')).on('end', resolve).on('error', reject);
     });
   }).then(()=>{
     return new Promise((resolve, reject)=>{
-      common.createSHA256File(destination, function(error) {
+      common.createSHA256File(origin, function(error) {
         if(error) {
           reject(error);
         } else {
@@ -68,8 +67,8 @@ function darwinDist(gulp, reqs) {
 
   gulp.task('dist-bundle', ['prefetch'], function() {
     return buildInstaller(gulp,
-      `dist/${productName}-${productVersion}-mac.zip`,
-      `dist/devsuite-${productVersion}-bundle-installer-mac.zip`,
+      `dist/${productName}-${productVersion}-mac.dmg`,
+      `dist/devsuite-${productVersion}-bundle-installer-mac.dmg`,
       [{
         'from': 'requirements-cache',
         'to': '.',
