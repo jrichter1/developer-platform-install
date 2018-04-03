@@ -85,7 +85,10 @@ function darwinDist(gulp, reqs) {
   });
 
   gulp.task('cleanup', function() {
-    return del(['dist/mac', `dist/${productName}-${productVersion}.blockmap`],
+    return del([
+      'dist/mac',
+      `dist/${productName}-${productVersion}.dmg`,
+      `dist/${productName}-${productVersion}.dmg.blockmap`],
       { force: false });
   });
 
