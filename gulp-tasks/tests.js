@@ -88,7 +88,7 @@ module.exports = function(gulp) {
 
   gulp.task('unpack-installer', function(cb) {
     console.log(yargs.argv);
-    console.log(yargs.arguments);
+    console.log(yargs.argv.binary);
     process.env.PTOR_BINARY = yargs.argv.binary;
     console.log(process.env.PTOR_BINARY);
     var bundle = yargs.argv.bundle;
