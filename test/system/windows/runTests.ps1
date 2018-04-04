@@ -33,6 +33,8 @@ if (-Not $myWindowsPrincipal.IsInRole($adminRole)) {
 $folder = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
 Set-Location -Path $folder
 
+echo $binary
+
 npm run system-test -- --binary $binary --virtualbox $virtualbox --hyperv $hyperv --cygwin $cygwin --jdk $jdk --targetFolder $targetFolder --bundle $bundle --additionalItems $additionalItems
 
 $logs = $folder + '\..\..\..\logs';

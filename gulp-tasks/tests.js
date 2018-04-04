@@ -87,7 +87,10 @@ module.exports = function(gulp) {
   });
 
   gulp.task('unpack-installer', function(cb) {
+    console.log(yargs.argv);
+    console.log(yargs.arguments);
     process.env.PTOR_BINARY = yargs.argv.binary;
+    console.log(process.env.PTOR_BINARY);
     var bundle = yargs.argv.bundle;
     var zip = `"${path.join(buildFolder, '7za.exe')}"`;
     var targetFolder = `"${path.join(buildFolder, 'target')}"`;
